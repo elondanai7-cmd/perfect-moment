@@ -57,6 +57,18 @@ def run(
 
         # Stage 3: cheap quality filter
         survivors_q, rejected_q = quality.filter_frames(frame_paths)
+
+        # AC-14 hard edge case: if EVERY frame fails the stage-3 hard filter
+        # (e.g. a fully dark/black clip), there would be zero candidates left
+        # for every later stage, and the pipeline would export nothing --
+        # violating the "never return empty" contract. Fall back to treating
+        # all originally-rejected frames as forced candidates so downstream
+        # stages (and the min_score bar in rank.py) can still pick a
+        # least-bad set and flag it low_quality, rather than exporting zero.
+        if not survivors_q:
+            warnings.append("WARNING: every frame failed the stage-3 quality filter (fully rejected clip); falling back to least-bad available frames (AC-14).")
+            survivors_q = [replace(s, passed=True) for s in rejected_q]
+
         survivor_paths = [s.path for s in survivors_q]
 
         # Stage 4: face/eye/smile (only on stage-3 survivors)
