@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הרגע המושלם — AI שהופך וידאו לתמונות מנצחות</title>
+<meta name="description" content="AI עובר על שעות של צילום ומוציא את חמש התמונות הכי טובות. לצלמי אירועים ולעסקים קטנים.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080c;
+    --bg-soft: #0f0f16;
+    --cyan: #29f0e0;
+    --cyan-dim: #1a8f88;
+    --violet: #b26bff;
+    --violet-dim: #6e3fb0;
+    --ink: #f2f2f7;
+    --ink-dim: #9a9aa8;
+    --line: rgba(255,255,255,0.08);
+    --font-display: 'Rubik', sans-serif;
+    --font-body: 'Heebo', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* film-grain texture overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ambient neon glow */
+  .glow-field {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 900px 600px at 85% -5%, rgba(41,240,224,0.16), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 10% 30%, rgba(178,107,255,0.14), transparent 60%),
+      radial-gradient(ellipse 800px 700px at 90% 90%, rgba(178,107,255,0.10), transparent 60%);
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ---------- NAV ---------- */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 0;
+    position: relative;
+    z-index: 2;
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+  }
+  .logo span { color: var(--cyan); }
+  .nav-cta {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-dim);
+    text-decoration: none;
+    border: 1px solid var(--line);
+    padding: 9px 18px;
+    border-radius: 999px;
+    transition: all 0.25s ease;
+  }
+  .nav-cta:hover {
+    color: var(--bg);
+    background: var(--cyan);
+    border-color: var(--cyan);
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 60px;
+    align-items: center;
+    padding: 70px 0 90px;
+    min-height: 78vh;
+  }
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; padding: 30px 0 60px; min-height: unset; }
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--cyan);
+    background: rgba(41,240,224,0.08);
+    border: 1px solid rgba(41,240,224,0.25);
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 28px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(2.4rem, 4.6vw, 3.7rem);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    margin-bottom: 26px;
+  }
+  h1 .accent {
+    background: linear-gradient(95deg, var(--cyan), var(--violet));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .sub {
+    font-size: 1.18rem;
+    line-height: 1.7;
+    color: var(--ink-dim);
+    max-width: 46ch;
+    margin-bottom: 40px;
+  }
+
+  .hero-ctas {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.02rem;
+    color: #06110f;
+    background: linear-gradient(95deg, var(--cyan), #6be8c9);
+    padding: 16px 30px;
+    border-radius: 12px;
+    text-decoration: none;
+    box-shadow: 0 0 0 rgba(41,240,224,0);
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    position: relative;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 8px 40px rgba(41,240,224,0.35);
+    transform: translateY(-2px);
+  }
+  .btn-primary svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  .hero-note {
+    font-size: 0.85rem;
+    color: var(--ink-dim);
+    opacity: 0.7;
+  }
+
+  /* ---------- FILMSTRIP VISUAL ---------- */
+  .filmstrip-stage {
+    position: relative;
+    height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .strip-row {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    right: 0;
+    opacity: 0.75;
+  }
+  .strip-frame {
+    width: 92px;
+    height: 62px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: linear-gradient(135deg, #1a1a24, #101018);
+    filter: blur(3px);
+    opacity: 0.5;
+    animation: frame-fade 4.5s ease-in-out infinite;
+  }
+  .strip-frame:nth-child(1) { animation-delay: 0s; }
+  .strip-frame:nth-child(2) { animation-delay: 0.3s; }
+  .strip-frame:nth-child(3) { animation-delay: 0.6s; }
+  .strip-frame:nth-child(4) { animation-delay: 0.9s; }
+  .strip-frame:nth-child(5) { animation-delay: 1.2s; }
+  @keyframes frame-fade {
+    0%, 100% { opacity: 0.35; filter: blur(3px); }
+    50% { opacity: 0.75; filter: blur(1px); }
+  }
+
+  .hero-frame {
+    position: relative;
+    width: 260px;
+    height: 340px;
+    border-radius: 18px;
+    background: linear-gradient(160deg, #14141c, #0b0b11);
+    border: 1px solid rgba(41,240,224,0.3);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.03) inset,
+      0 30px 80px rgba(0,0,0,0.6),
+      0 0 90px rgba(41,240,224,0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    animation: frame-arrive 1.4s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes frame-arrive {
+    0% { opacity: 0; transform: scale(0.85) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .hero-frame-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--bg);
+    background: var(--cyan);
+    padding: 5px 11px;
+    border-radius: 999px;
+  }
+  .hero-frame-icon {
+    width: 64px;
+    height: 64px;
+    color: var(--cyan);
+    opacity: 0.9;
+  }
+  .hero-frame-caption {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    font-weight: 500;
+  }
+
+  /* ---------- VALUE SECTION ---------- */
+  .section-label {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    color: var(--violet);
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    margin-bottom: 56px;
+    max-width: 32ch;
+  }
+
+  .values {
+    padding: 60px 0 40px;
+  }
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+  }
+  @media (max-width: 900px) {
+    .value-grid { grid-template-columns: 1fr; }
+  }
+
+  .value-card {
+    background: linear-gradient(160deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01));
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 32px 28px;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: translateY(24px);
+    animation: card-rise 0.7s ease forwards;
+  }
+  .value-card:nth-child(1) { animation-delay: 0.05s; }
+  .value-card:nth-child(2) { animation-delay: 0.18s; }
+  .value-card:nth-child(3) { animation-delay: 0.31s; }
+  @keyframes card-rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .value-card:hover {
+    border-color: rgba(41,240,224,0.35);
+    transform: translateY(-4px);
+  }
+  .value-card:nth-child(2):hover { border-color: rgba(178,107,255,0.4); }
+
+  .value-num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 2.1rem;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--cyan);
+    opacity: 0.5;
+    margin-bottom: 18px;
+    line-height: 1;
+  }
+  .value-card:nth-child(2) .value-num { -webkit-text-stroke-color: var(--violet); }
+  .value-card:nth-child(3) .value-num { -webkit-text-stroke-color: var(--cyan); }
+
+  .value-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.12rem;
+    margin-bottom: 12px;
+  }
+  .value-text {
+    font-size: 0.96rem;
+    line-height: 1.65;
+    color: var(--ink-dim);
+  }
+
+  /* ---------- HOW IT WORKS STRIP ---------- */
+  .how {
+    padding: 90px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin: 60px 0;
+  }
+  .how-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .how-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 150px;
+  }
+  .how-step-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: rgba(41,240,224,0.08);
+    border: 1px solid rgba(41,240,224,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    color: var(--cyan);
+  }
+  .how-step-icon svg { width: 24px; height: 24px; }
+  .how-step-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-dim);
+  }
+  .how-arrow {
+    color: var(--ink-dim);
+    opacity: 0.4;
+    font-size: 1.4rem;
+    margin: 0 6px;
+  }
+  @media (max-width: 700px) {
+    .how-arrow { transform: rotate(90deg); margin: 6px 0; }
+    .how-flow { flex-direction: column; }
+  }
+
+  /* ---------- CTA FOOTER ---------- */
+  .cta-final {
+    text-align: center;
+    padding: 70px 0 110px;
+  }
+  .cta-final h2 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    margin-bottom: 18px;
+  }
+  .cta-final p {
+    color: var(--ink-dim);
+    font-size: 1.05rem;
+    margin-bottom: 38px;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 28px 0;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--ink-dim);
+    opacity: 0.6;
+  }
+
+  /* floating whatsapp button */
+  .float-wa {
+    position: fixed;
+    bottom: 26px;
+    left: 26px;
+    z-index: 100;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #29f0e0, #6be8c9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 30px rgba(41,240,224,0.4);
+    text-decoration: none;
+    animation: float-pulse 2.6s ease-in-out infinite;
+  }
+  .float-wa svg { width: 28px; height: 28px; color: #06110f; }
+  @keyframes float-pulse {
+    0%, 100% { box-shadow: 0 6px 30px rgba(41,240,224,0.4); }
+    50% { box-shadow: 0 6px 44px rgba(41,240,224,0.65); }
+  }
+
+  ::selection { background: var(--cyan); color: var(--bg); }
+</style>
+</head>
+<body>
+
+<div class="glow-field"></div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">הרגע <span>המושלם</span></div>
+    <a class="nav-cta" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%94%D7%A8%D7%92%D7%A2%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9D" target="_blank" rel="noopener">דברו איתנו</a>
+  </nav>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">מופעל על ידי AI</div>
+      <h1>מהווידאו שכבר צילמתם,<br>ל<span class="accent">תמונות שהלקוח יאהב</span></h1>
+      <p class="sub">AI עובר על שעות של צילום ומוציא את חמש התמונות הכי טובות — בלי לשבת ולסנן פריים אחרי פריים.</p>
+      <div class="hero-ctas">
+        <a class="btn-primary" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%94%D7%A8%D7%92%D7%A2%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9D" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.8L2 22l5.42-1.42a9.9 9.9 0 0 0 4.62 1.18h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.13-2.9-7C17.17 3.03 14.69 2 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.42a8.2 8.2 0 0 1 2.42 5.82c0 4.55-3.7 8.24-8.25 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.25-4.38c0-4.55 3.7-8.24 8.25-8.24m-4.52 4.7c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.03 0 1.2.87 2.35 1 2.52.12.16 1.7 2.6 4.12 3.64.58.25 1.02.4 1.37.51.58.18 1.1.16 1.52.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.32-.75-1.8-.2-.47-.4-.4-.54-.41-.14-.01-.3-.01-.46-.01Z"/></svg>
+          שליחת סרטון בוואטסאפ
+        </a>
+      </div>
+      <p class="hero-note" style="margin-top:22px;">ללא התקנה. שולחים קובץ, מקבלים תמונות.</p>
+    </div>
+
+    <div class="filmstrip-stage">
+      <div class="strip-row">
+        <div class="strip-frame"></div>
+        <div class="strip-frame"></div>
+        <div class="strip-frame"></div>
+        <div class="strip-frame"></div>
+        <div class="strip-frame"></div>
+      </div>
+      <div class="hero-frame">
+        <div class="hero-frame-badge">התמונה שנבחרה</div>
+        <svg class="hero-frame-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="3" y="4" width="18" height="16" rx="2.5"/>
+          <circle cx="8.5" cy="10" r="1.6" fill="currentColor" stroke="none"/>
+          <path d="M3 16.5l4.8-4.8a2 2 0 0 1 2.7-.05L15 16"/>
+          <path d="M13.5 14.5l1.7-1.7a2 2 0 0 1 2.7 0L21 15.5"/>
+        </svg>
+        <div class="hero-frame-caption">מתוך 60 פריימים שנסרקו</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="values">
+    <div class="section-label">איך זה עוזר</div>
+    <h2 class="section-title">שלושה דברים שלקוחות אומרים לנו הכי הרבה</h2>
+    <div class="value-grid">
+      <div class="value-card">
+        <div class="value-num">01</div>
+        <div class="value-title">חוסך שעות של סינון ידני</div>
+        <div class="value-text">במקום לעבור על כל הצילום בעצמכם, מקבלים ישר את התמונות החדות והטובות ביותר — מדורגות ומוכנות.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-num">02</div>
+        <div class="value-title">עובד מהצילום שכבר קיים</div>
+        <div class="value-text">לא צריך צלם נוסף, ציוד חדש או צילום מיוחד — רק את הווידאו שכבר יש לכם, מהטלפון או מהמצלמה.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-num">03</div>
+        <div class="value-title">מתאים גם לאירועים וגם לעסק</div>
+        <div class="value-text">צלמי חתונות ובר/בת מצווה מקבלים תמונות מוכנות ללקוח; עסקים קטנים מקבלים תמונות קטלוג מסרטון מוצר קצר.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how">
+    <div class="section-label" style="text-align:center;">התהליך</div>
+    <div class="how-flow">
+      <div class="how-step">
+        <div class="how-step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 10l5-3v10l-5-3M4 5h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+        </div>
+        <div class="how-step-label">שולחים וידאו</div>
+      </div>
+      <div class="how-arrow">←</div>
+      <div class="how-step">
+        <div class="how-step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="how-step-label">ה-AI סורק וממיין</div>
+      </div>
+      <div class="how-arrow">←</div>
+      <div class="how-step">
+        <div class="how-step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <div class="how-step-label">בוחרים 5 מנצחות</div>
+      </div>
+      <div class="how-arrow">←</div>
+      <div class="how-step">
+        <div class="how-step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 9l-5-5-5 5M12 4v13"/></svg>
+        </div>
+        <div class="how-step-label">מקבלים תוצאה</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-final">
+    <h2>יש לכם וידאו שמחכה לסינון?</h2>
+    <p>שולחים בוואטסאפ, מקבלים תשובה אישית עם מה שהתמונות שלכם יכולות להיות.</p>
+    <a class="btn-primary" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%94%D7%A8%D7%92%D7%A2%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9D" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.8L2 22l5.42-1.42a9.9 9.9 0 0 0 4.62 1.18h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.13-2.9-7C17.17 3.03 14.69 2 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.42a8.2 8.2 0 0 1 2.42 5.82c0 4.55-3.7 8.24-8.25 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.25-4.38c0-4.55 3.7-8.24 8.25-8.24m-4.52 4.7c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.03 0 1.2.87 2.35 1 2.52.12.16 1.7 2.6 4.12 3.64.58.25 1.02.4 1.37.51.58.18 1.1.16 1.52.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.32-.75-1.8-.2-.47-.4-.4-.54-.41-.14-.01-.3-.01-.46-.01Z"/></svg>
+      שליחת סרטון בוואטסאפ
+    </a>
+  </section>
+</div>
+
+<a class="float-wa" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%94%D7%A8%D7%92%D7%A2%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9D" target="_blank" rel="noopener" aria-label="פתיחת וואטסאפ">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.8L2 22l5.42-1.42a9.9 9.9 0 0 0 4.62 1.18h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.13-2.9-7C17.17 3.03 14.69 2 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.42a8.2 8.2 0 0 1 2.42 5.82c0 4.55-3.7 8.24-8.25 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.25-4.38c0-4.55 3.7-8.24 8.25-8.24m-4.52 4.7c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.03 0 1.2.87 2.35 1 2.52.12.16 1.7 2.6 4.12 3.64.58.25 1.02.4 1.37.51.58.18 1.1.16 1.52.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.32-.75-1.8-.2-.47-.4-.4-.54-.41-.14-.01-.3-.01-.46-.01Z"/></svg>
+</a>
+
+<footer>
+  <div class="wrap">הרגע המושלם — מבית FlowUp</div>
+</footer>
+
+</body>
+</html>
