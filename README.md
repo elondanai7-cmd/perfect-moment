@@ -63,6 +63,23 @@ modern CPU (measured: 37-47s on the founder's laptop during A8 testing).
 Longer/4K clips take proportionally longer — the pipeline warns but does not
 fail on oversized input (see "Graceful degrade" below).
 
+Optionally install as a proper command (`pip install -e .`), which gives you
+a `perfectmoment` console command instead of `python -m perfectmoment`.
+
+## Tests
+
+```
+pip install -r requirements-dev.txt
+pytest
+```
+
+24 tests cover every stage (extract/quality/faces/rank/pipeline) using
+synthetic ffmpeg-generated fixtures plus one real portrait photo (cached
+per session, skipped automatically if offline). Includes explicit regression
+tests for both real bugs found during the build: the AC-16 4K-boundary
+off-by-one, and the AC-14 all-frames-rejected edge case that used to export
+zero frames.
+
 ## Graceful degrade behavior
 
 The pipeline never crashes or returns nothing on bad input:
