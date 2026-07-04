@@ -1,12 +1,13 @@
-"""CLI entrypoint (stub for step A1 — full wiring lands in A7).
+"""CLI entrypoint.
 
     python -m perfectmoment extract <video> --top-n 5 --min-score 0.6 [--fps 2] [--no-faces] [--out ./perfect-moment-out]
 """
 
 import argparse
 import sys
+from pathlib import Path
 
-from perfectmoment import config
+from perfectmoment import config, pipeline
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,8 +33,24 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "extract":
-        print("NOTE: pipeline not wired yet (lands in step A7). Parsed args:")
-        print(vars(args))
+        video_path = Path(args.video)
+        video_stem = video_path.stem
+        out_dir = Path(args.out) / video_stem
+
+        result = pipeline.run(
+            video_path=video_path,
+            out_dir=out_dir,
+            top_n=args.top_n,
+            min_score=args.min_score,
+            fps=args.fps,
+            force_no_faces=args.no_faces,
+        )
+
+        for warning in result.warnings:
+            print(warning)
+        print(f"Exported {result.exported_count} frame(s) to {out_dir}")
+        print(f"Manifest: {result.manifest_path}")
+        print(f"Elapsed: {result.elapsed_seconds:.1f}s")
         return 0
 
     parser.print_help()
