@@ -1,2 +1,0 @@
-[console_scripts]
-perfectmoment = perfectmoment.__main__:main
