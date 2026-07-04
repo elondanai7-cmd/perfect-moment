@@ -1,0 +1,12 @@
+# CPU-only torch build — install this index FIRST to avoid pulling the multi-GB CUDA wheel:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# Then:
+#   pip install -r requirements.txt
+#
+# Verified working on Python 3.14 (Windows) as of 2026-07-04 — no compatibility issues found.
+opencv-python==5.0.0.93
+mediapipe==0.10.35
+pyiqa==0.1.15.post2
+ImageHash==4.3.2
+Pillow==12.3.0
+numpy==2.4.6

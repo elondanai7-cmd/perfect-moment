@@ -1,0 +1,6 @@
+models/*.task
+perfect-moment-out/
+__pycache__/
+*.pyc
+.venv/
+venv/
