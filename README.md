@@ -35,7 +35,21 @@ issues found with any of the pinned versions in `requirements.txt`.
 
 ```
 python -m perfectmoment extract <video_path> --top-n 5 --min-score 0.6 --out ./perfect-moment-out
+python -m perfectmoment batch <folder>       # cull a whole shoot folder of clips
 ```
+
+`batch` is the photographer workflow: point it at a folder of clips from a
+shoot. The NIMA model loads once for the entire batch (not per clip), each
+video gets its own `<out>/<video-stem>/` output, one broken clip doesn't kill
+the rest, and a summary prints at the end.
+
+Both commands print per-stage progress (`[1/7] Probing...` ... `[7/7]
+Re-extracting...`) so long runs aren't silent, and both generate
+**`report.html`** next to the manifest — a self-contained visual contact
+sheet (frame thumbnails + score + human-readable reason + gate badges) that a
+photographer can review in a browser without touching JSON. The whole output
+folder can be zipped and sent; the report uses relative image paths. Disable
+with `--no-report`.
 
 Flags:
 - `--top-n` (default 5) — how many ranked stills to export.
@@ -50,7 +64,12 @@ Flags:
 Output: `rank_01.jpg` .. `rank_0N.jpg` (full resolution, best first) and
 `manifest.json` recording every sub-score per exported frame (sharpness,
 brightness, face_count, eyes_open, smile, composition, aesthetic_norm,
-blur_norm, final, low_quality) so every pick is explainable, not a black box.
+blur_norm, final, low_quality, scene, gated, gate_reason, reason,
+eyes_open_pct, duchenne_bonus, cohesion, gaze_deviation, face_lighting) so
+every pick is explainable, not a black box. `reason` is a human-readable,
+FilterPixel-style one-line summary of why the frame scored as it did. The
+manifest also records `stage_timings_seconds` per run (probe/sample/filter/
+faces/aesthetics/rank/output) for A8/A9 performance profiling.
 
 ### Example
 
@@ -73,12 +92,13 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-24 tests cover every stage (extract/quality/faces/rank/pipeline) using
+32 tests cover every stage (extract/quality/faces/rank/pipeline/output) using
 synthetic ffmpeg-generated fixtures plus one real portrait photo (cached
 per session, skipped automatically if offline). Includes explicit regression
-tests for both real bugs found during the build: the AC-16 4K-boundary
-off-by-one, and the AC-14 all-frames-rejected edge case that used to export
-zero frames.
+tests for real bugs found during the build: the AC-16 4K-boundary off-by-one,
+the AC-14 all-frames-rejected edge case that used to export zero frames, and
+the v2 scoring model's relative-blur-gate edge case (a clip with no
+sharpness variance used to gate every frame, including the better one).
 
 ## Graceful degrade behavior
 
@@ -99,11 +119,16 @@ The pipeline never crashes or returns nothing on bad input:
 ## Per-source calibration notes (step A9 — pending real footage)
 
 The default thresholds in `perfectmoment/config.py`
-(`BLUR_VARIANCE_MIN`, `BRIGHTNESS_MIN/MAX`, ranking weights) are **global
-placeholders**, not yet calibrated against real phone/DSLR/low-light event
-footage. Real-footage calibration is step A9 in the implementation plan and
-requires actual clips from a beta photographer — it cannot be meaningfully
-done against synthetic test patterns.
+(`BLUR_VARIANCE_MIN`, `BRIGHTNESS_MIN/MAX`, and the `SCORING` dict's gate
+thresholds/per-scene weights) are **research-informed hypotheses**, not yet
+calibrated against real phone/DSLR/low-light event footage. Real-footage
+calibration is step A9 in the implementation plan and requires actual clips
+from a beta photographer — it cannot be meaningfully done against synthetic
+test patterns. The scoring model itself (two-pass hard-gate + weighted-rank,
+see `perfectmoment/rank.py`) is based on research into how professional
+culling tools work (`.specs/scratchpad/scoring-research.md`), but the
+concrete weight percentages are still hypotheses awaiting the AC-13 blind
+panel, not validated ground truth.
 
 Known real findings from implementation so far (see git history for A5, A8):
 - pyiqa's NIMA has **no MobileNet-backbone variant** — only InceptionV2

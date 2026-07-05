@@ -22,6 +22,13 @@ from perfectmoment import config, pipeline  # noqa: E402
 
 
 def main() -> None:
+    # Windows' default stdout/stderr encoding (cp1252) crashes on Hebrew or
+    # other non-Latin filenames/paths -- reconfigure to UTF-8.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Pick the single best frame from a video.")
     parser.add_argument("video", help="Path to the input video file.")
     parser.add_argument("--out", default=config.DEFAULT_OUT_DIR)
@@ -48,13 +55,17 @@ def main() -> None:
     print("=" * 60)
     print(f"WINNER: {out_dir / winner['output_file']}")
     print("=" * 60)
-    print(f"final score      = {winner['final']:.3f}"
-          f"  (0.3*blur + 0.4*face_quality + 0.3*aesthetic)")
-    print(f"  blur_norm      = {winner['blur_norm']:.3f}   (from sharpness={winner['sharpness']:.1f})")
+    print(f"scene            = {winner['scene']} (weights: perfectmoment/config.py SCORING['{winner['scene'].upper()}'])")
+    print(f"final score      = {winner['final']:.3f}")
+    print(f"reason           = {winner['reason']}")
+    print(f"gated            = {winner['gated']}" + (f" ({winner['gate_reason']})" if winner['gated'] else ""))
+    print(f"  sharpness      = {winner['sharpness']:.1f}   blur_norm = {winner['blur_norm']:.3f}")
     print(f"  face_count     = {winner['face_count']}")
     print(f"  eyes_open      = {winner['eyes_open']:.3f}")
-    print(f"  smile          = {winner['smile']:.3f}")
+    print(f"  smile          = {winner['smile']:.3f}  (duchenne_bonus={winner['duchenne_bonus']:.3f})")
+    print(f"  gaze_deviation = {winner['gaze_deviation']:.3f}  (0 = looking at camera)")
     print(f"  composition    = {winner['composition']:.3f}")
+    print(f"  face_lighting  = {winner['face_lighting']:.3f}")
     print(f"  aesthetic_norm = {winner['aesthetic_norm']:.3f}")
     print(f"  low_quality    = {winner['low_quality']}")
     print(f"  timestamp      = {winner['timestamp_seconds']:.2f}s into the clip")

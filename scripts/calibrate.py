@@ -7,7 +7,7 @@ synthetic test patterns would produce meaningless numbers; it is built now so
 that calibration is a single command once real clips are available.
 
 Usage:
-    python scripts/calibrate.py known_sharp/*.jpg known_blurry/*.jpg --labels sharp sharp sharp blurry blurry
+    python scripts/calibrate.py --sharp-dir calibration/sharp --blurry-dir calibration/blurry
 
 Simplest real workflow (once you have real footage):
     1. From a real event clip, manually pick ~10 frames you'd call "sharp,
@@ -59,6 +59,13 @@ def suggest_split_point(sharp_scores: list[float], blurry_scores: list[float]) -
 
 
 def main() -> None:
+    # Windows' default stdout/stderr encoding (cp1252) crashes on Hebrew or
+    # other non-Latin filenames/paths -- reconfigure to UTF-8.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="A9 per-source blur threshold calibration harness.")
     parser.add_argument("--sharp-dir", required=True, type=Path, help="Directory of frames labeled 'keep, sharp enough'.")
     parser.add_argument("--blurry-dir", required=True, type=Path, help="Directory of frames labeled 'reject, too blurry'.")

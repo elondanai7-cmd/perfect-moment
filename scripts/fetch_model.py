@@ -7,6 +7,7 @@ requirements.txt`:
     python scripts/fetch_model.py
 """
 
+import sys
 import urllib.request
 from pathlib import Path
 
@@ -19,6 +20,13 @@ DEST = Path(__file__).resolve().parent.parent / "models" / "face_landmarker.task
 
 
 def main() -> None:
+    # Windows' default stdout/stderr encoding (cp1252) crashes on Hebrew or
+    # other non-Latin paths -- reconfigure to UTF-8.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
     DEST.parent.mkdir(parents=True, exist_ok=True)
     if DEST.exists():
         print(f"Already present: {DEST}")
