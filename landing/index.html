@@ -235,8 +235,14 @@
     inset-inline-start: 0; pointer-events: none; transition: inset-inline-start 0.1s linear;
   }
   #demo-range {
+    /* Keyboard-only overlay: dragging is fully handled by .demo-strip's own
+       pointer listeners (custom RTL math). pointer-events:none prevents a
+       real mouse/touch drag from ALSO triggering the native range slider's
+       own thumb-dragging, which would use its own (non-RTL-aware) value and
+       fight with pointerToIndex's calculation -- keyboard focus/arrows still
+       work fully since pointer-events doesn't affect keyboard operability. */
     position: absolute; inset: 0; width: 100%; height: 100%;
-    opacity: 0; cursor: grab;
+    opacity: 0; pointer-events: none;
   }
 
   /* score panel */
