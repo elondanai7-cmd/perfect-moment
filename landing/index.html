@@ -3,18 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>הרגע המושלם — AI שמוצא את הפריים המושלם בסרטון שלכם</title>
-<meta name="description" content="גררו על הפילם ותראו איך המנוע בוחר: AI שסורק את הווידאו שלכם, פוסל פריימים עם עיניים עצומות וטשטוש, ומחזיר את התמונות שהלקוח יאהב — עם הסבר לכל בחירה.">
+<title>הרגע המושלם — סרטון קצר נכנס, התמונה המושלמת יוצאת</title>
+<meta name="description" content="בלי לשלם אלפי שקלים על צלם: מצלמים סרטון של כמה שניות בטלפון, שולחים בוואטסאפ, ומקבלים חזרה את הפריים המושלם — עיניים פקוחות, חיוך אמיתי, תמונה חדה. עם הסבר לכל בחירה.">
 <meta name="theme-color" content="#08080c">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
-<meta property="og:title" content="הרגע המושלם — AI שמוצא את הפריים המושלם">
-<meta property="og:description" content="מהווידאו שכבר צילמתם, לתמונות שהלקוח יאהב. כל בחירה מוסברת — לא קופסה שחורה.">
-<meta property="og:image" content="demo/og.jpg">
+<meta property="og:title" content="הרגע המושלם — סרטון קצר נכנס, התמונה המושלמת יוצאת">
+<meta property="og:description" content="מצלמים כמה שניות וידאו במקום 30 תמונות — AI בוחר את הפריים שבו אתם יוצאים הכי טוב, ומסביר למה.">
+<meta property="og:url" content="https://perfectmoment.flowup.co.il/">
 <meta property="og:locale" content="he_IL">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://perfectmoment.flowup.co.il/">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"הרגע המושלם","applicationCategory":"MultimediaApplication","operatingSystem":"Windows","description":"AI שמחלץ את הפריימים הטובים ביותר מווידאו","offers":{"@type":"Offer","price":"0","priceCurrency":"ILS"}}
+{"@context":"https://schema.org","@type":"Service","name":"הרגע המושלם","serviceType":"חילוץ התמונה הטובה ביותר מסרטון באמצעות AI","description":"שולחים סרטון קצר בוואטסאפ ומקבלים חזרה את הפריים המושלם — בלי צלם","areaServed":"IL","offers":{"@type":"Offer","price":"0","priceCurrency":"ILS","description":"בטא חינם"}}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -92,7 +93,7 @@
     border-bottom: 1px solid var(--line);
   }
   nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; }
-  .logo { font-family: var(--font-display); font-weight: 900; font-size: 1.15rem; }
+  .logo { font-family: var(--font-display); font-weight: 900; font-size: 1.15rem; color: inherit; text-decoration: none; }
   .logo span { color: var(--cyan); }
   .nav-cta {
     font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); text-decoration: none;
@@ -121,7 +122,7 @@
 
   h1 {
     font-family: var(--font-display); font-weight: 900;
-    font-size: clamp(2.3rem, 4.5vw, 3.6rem); line-height: 1.12; margin-bottom: 24px;
+    font-size: clamp(2.5rem, 5vw, 4.1rem); line-height: 1.1; margin-bottom: 24px;
   }
   h1 .accent {
     background: linear-gradient(95deg, var(--cyan), var(--violet));
@@ -146,17 +147,52 @@
 
   .hero-visual { display: flex; justify-content: center; }
   .hero-frame {
-    position: relative; width: 250px; border-radius: 18px; overflow: hidden;
-    border: 1px solid rgba(41,240,224,0.3);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 90px rgba(41,240,224,0.14);
+    position: relative; width: 320px; max-width: 100%;
     animation: frame-arrive 1.2s cubic-bezier(0.16,1,0.3,1);
+    transition: transform 0.15s ease-out;
+    transform-style: preserve-3d; will-change: transform;
   }
   @keyframes frame-arrive { 0% { opacity:0; transform:scale(0.88) translateY(18px);} 100% { opacity:1; transform:none;} }
-  .hero-frame img { width: 100%; display: block; }
-  .hero-frame-badge {
-    position: absolute; top: 14px; inset-inline-start: 14px;
-    font-family: var(--font-display); font-size: 0.68rem; font-weight: 700;
-    color: var(--bg); background: var(--cyan); padding: 5px 11px; border-radius: 999px;
+  .hero-frame svg { width: 100%; height: auto; display: block; }
+
+  /* the engine "working" loop: scan sweeps the winner frame, badge pops, rejects dim */
+  .hg-scan {
+    transform-box: fill-box;
+    animation: hg-scan 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes hg-scan {
+    0%   { opacity: 0; transform: translateY(0); }
+    6%   { opacity: 0.85; }
+    40%  { opacity: 0.85; transform: translateY(122px); }
+    48%, 100% { opacity: 0; transform: translateY(122px); }
+  }
+  .hg-badge {
+    transform-box: fill-box; transform-origin: center;
+    animation: hg-badge-pop 3.6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  }
+  @keyframes hg-badge-pop {
+    0%, 42% { transform: scale(0); opacity: 0; }
+    52%     { transform: scale(1.25); opacity: 1; }
+    58%, 96% { transform: scale(1); opacity: 1; }
+    100%    { transform: scale(1); opacity: 0; }
+  }
+  .hg-badge-label { animation: hg-label-fade 3.6s ease infinite; }
+  @keyframes hg-label-fade {
+    0%, 46% { opacity: 0; }
+    56%, 96% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .hg-winner-frame { animation: hg-frame-glow 3.6s ease infinite; }
+  @keyframes hg-frame-glow {
+    0%, 42% { stroke: rgba(41,240,224,0.3); }
+    55%, 92% { stroke: #29f0e0; }
+    100% { stroke: rgba(41,240,224,0.5); }
+  }
+  .hg-reject { animation: hg-reject-dim 3.6s ease infinite; }
+  .hg-reject-2 { animation-delay: 0.25s; }
+  @keyframes hg-reject-dim {
+    0%, 38% { opacity: 0.72; }
+    52%, 100% { opacity: 0.4; }
   }
 
   /* ---------- SECTION SHELL ---------- */
@@ -165,6 +201,7 @@
     font-family: var(--font-display); font-weight: 700; font-size: 0.82rem;
     letter-spacing: 0.08em; color: var(--violet); margin-bottom: 12px;
   }
+  .section-label.center { text-align: center; }
   .section-title {
     font-family: var(--font-display); font-weight: 900;
     font-size: clamp(1.5rem, 2.6vw, 2.1rem); margin-bottom: 14px; max-width: 34ch;
@@ -173,6 +210,11 @@
 
   .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.7s ease, transform 0.7s ease; }
   .reveal.in { opacity: 1; transform: none; }
+  /* staggered reveal: siblings enter as a wave, not all at once */
+  .value-grid .reveal:nth-child(2), .stats .reveal:nth-child(2),
+  .passes .reveal:nth-child(2), .audiences .reveal:nth-child(2) { transition-delay: 0.12s; }
+  .value-grid .reveal:nth-child(3), .stats .reveal:nth-child(3),
+  .audiences .reveal:nth-child(3) { transition-delay: 0.24s; }
 
   /* ---------- S3: DEMO ---------- */
   #demo .demo-shell {
@@ -303,14 +345,20 @@
   @media (max-width: 860px) { .passes { grid-template-columns: 1fr; } }
   .pass-card {
     background: var(--bg-soft); border: 1px solid var(--line); border-radius: 16px; padding: 30px 26px;
+    transition: border-color 0.3s ease, transform 0.3s ease;
   }
   .pass-card.gate { border-color: rgba(255,107,107,0.25); }
   .pass-card.rank { border-color: rgba(41,240,224,0.25); }
+  .pass-card.gate:hover { border-color: rgba(255,107,107,0.5); transform: translateY(-4px); }
+  .pass-card.rank:hover { border-color: rgba(41,240,224,0.5); transform: translateY(-4px); }
   .pass-num {
     font-family: var(--font-display); font-weight: 900; font-size: 2rem;
-    color: transparent; -webkit-text-stroke: 1.5px var(--red); opacity: 0.6; margin-bottom: 14px; line-height: 1;
+    color: var(--red); -webkit-text-stroke: 1.5px var(--red); opacity: 0.6; margin-bottom: 14px; line-height: 1;
   }
-  .pass-card.rank .pass-num { -webkit-text-stroke-color: var(--cyan); }
+  .pass-card.rank .pass-num { color: var(--cyan); -webkit-text-stroke-color: var(--cyan); }
+  @supports (-webkit-text-stroke: 1px black) or (text-stroke: 1px black) {
+    .pass-num { color: transparent; }
+  }
   .pass-title { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; margin-bottom: 10px; }
   .pass-text { color: var(--ink-dim); font-size: 0.95rem; line-height: 1.65; margin-bottom: 16px; }
   .pass-quote { color: var(--cyan); font-size: 0.9rem; font-weight: 600; border-inline-start: 3px solid var(--cyan); padding-inline-start: 12px; }
@@ -327,7 +375,10 @@
   @media (max-width: 700px) { .stats { grid-template-columns: 1fr; } }
   .stat-num {
     font-family: var(--font-display); font-weight: 900; font-size: 2.6rem;
-    color: transparent; -webkit-text-stroke: 1.5px var(--cyan); line-height: 1.1;
+    color: var(--cyan); -webkit-text-stroke: 1.5px var(--cyan); line-height: 1.1;
+  }
+  @supports (-webkit-text-stroke: 1px black) or (text-stroke: 1px black) {
+    .stat-num { color: transparent; }
   }
   .stat-label { color: var(--ink-dim); font-size: 0.9rem; margin-top: 8px; }
   .terminal-card {
@@ -349,9 +400,12 @@
   .value-card:hover { border-color: rgba(41,240,224,0.35); transform: translateY(-4px); }
   .value-num {
     font-family: var(--font-display); font-weight: 900; font-size: 2.1rem;
-    color: transparent; -webkit-text-stroke: 1.5px var(--cyan); opacity: 0.5; margin-bottom: 18px; line-height: 1;
+    color: var(--cyan); -webkit-text-stroke: 1.5px var(--cyan); opacity: 0.5; margin-bottom: 18px; line-height: 1;
   }
-  .value-card:nth-child(2) .value-num { -webkit-text-stroke-color: var(--violet); }
+  .value-card:nth-child(2) .value-num { color: var(--violet); -webkit-text-stroke-color: var(--violet); }
+  @supports (-webkit-text-stroke: 1px black) or (text-stroke: 1px black) {
+    .value-num { color: transparent; }
+  }
   .value-title { font-family: var(--font-display); font-weight: 700; font-size: 1.12rem; margin-bottom: 12px; }
   .value-text { font-size: 0.96rem; line-height: 1.65; color: var(--ink-dim); }
 
@@ -374,8 +428,25 @@
   .aud-card {
     background: var(--bg-soft); border: 1px solid var(--line); border-radius: 16px; padding: 32px 28px;
     display: flex; flex-direction: column; gap: 14px;
+    transition: border-color 0.3s ease, transform 0.3s ease;
   }
-  .aud-card h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; }
+  .aud-card:hover { border-color: rgba(41,240,224,0.35); transform: translateY(-4px); }
+  .aud-card.primary {
+    grid-column: 1 / -1;
+    border-color: rgba(41,240,224,0.3);
+    background: linear-gradient(160deg, rgba(41,240,224,0.05), rgba(178,107,255,0.04)), var(--bg-soft);
+  }
+  .aud-card.primary h3 { font-size: 1.4rem; }
+  .aud-card.primary .aud-cta {
+    color: #06110f; background: linear-gradient(95deg, var(--cyan), #6be8c9);
+    border-color: transparent; font-family: var(--font-display); font-weight: 700;
+  }
+  .aud-card.primary .aud-cta:hover { box-shadow: 0 6px 30px rgba(41,240,224,0.35); }
+  .aud-card h3 {
+    font-family: var(--font-display); font-weight: 700; font-size: 1.2rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .aud-card h3 svg { width: 22px; height: 22px; color: var(--cyan); flex-shrink: 0; }
   .aud-card p { color: var(--ink-dim); font-size: 0.95rem; line-height: 1.65; flex: 1; }
   .aud-note { font-size: 0.82rem; color: var(--ink-dim); opacity: 0.8; }
   .aud-cta {
@@ -413,13 +484,14 @@
 </head>
 <body>
 
-<a class="skip-link" href="#demo">דילוג להדגמה</a>
+<a class="skip-link" href="#top">דילוג לתוכן</a>
 <div class="glow-field"></div>
 
 <header class="site-nav" id="site-nav">
+  <span id="top" style="position:absolute; top:0;" aria-hidden="true"></span>
   <div class="wrap">
     <nav>
-      <div class="logo">הרגע <span>המושלם</span></div>
+      <a class="logo" href="#top" aria-label="הרגע המושלם — לתחילת העמוד">הרגע <span>המושלם</span></a>
       <a class="nav-cta" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%94%D7%A8%D7%92%D7%A2%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9D" target="_blank" rel="noopener">דברו איתנו</a>
     </nav>
   </div>
@@ -430,85 +502,110 @@
   <!-- S2: HERO -->
   <section class="hero" aria-label="פתיח">
     <div>
-      <div class="eyebrow">מופעל על ידי AI — וכל בחירה מוסברת</div>
-      <h1>מהווידאו שכבר צילמתם,<br>ל<span class="accent">תמונות שהלקוח יאהב</span></h1>
-      <p class="sub">AI עובר על שעות של צילום ומוציא את התמונות הכי טובות — בלי לשבת ולסנן פריים אחרי פריים. גררו על הפילם למטה ותראו אותו עובד.</p>
+      <div class="eyebrow">בטא חינם — שולחים סרטון, מקבלים תמונה</div>
+      <h1>בלי לשלם אלפי שקלים על צלם.<br><span class="accent">סרטון קצר נכנס, התמונה המושלמת יוצאת</span></h1>
+      <p class="sub">עומדים מול הנוף? במקום לצלם 30 תמונות ולקוות שאחת יצאה טוב — מצלמים סרטון של כמה שניות. ה-AI עובר פריים-פריים ובוחר את הרגע שבו העיניים פקוחות, החיוך אמיתי והתמונה חדה. ומסביר למה.</p>
       <div class="hero-ctas">
-        <a class="btn-primary" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%94%D7%A8%D7%92%D7%A2%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9D" target="_blank" rel="noopener">
+        <a class="btn-primary" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%A6%D7%99%D7%9C%D7%9E%D7%AA%D7%99%20%D7%A1%D7%A8%D7%98%D7%95%D7%9F%20%D7%A7%D7%A6%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A7%D7%91%D7%9C%20%D7%9E%D7%9E%D7%A0%D7%95%20%D7%90%D7%AA%20%D7%94%D7%AA%D7%9E%D7%95%D7%A0%D7%94%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9E%D7%AA" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.8L2 22l5.42-1.42a9.9 9.9 0 0 0 4.62 1.18h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.13-2.9-7C17.17 3.03 14.69 2 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.42a8.2 8.2 0 0 1 2.42 5.82c0 4.55-3.7 8.24-8.25 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.25-4.38c0-4.55 3.7-8.24 8.25-8.24m-4.52 4.7c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.03 0 1.2.87 2.35 1 2.52.12.16 1.7 2.6 4.12 3.64.58.25 1.02.4 1.37.51.58.18 1.1.16 1.52.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.32-.75-1.8-.2-.47-.4-.4-.54-.41-.14-.01-.3-.01-.46-.01Z"/></svg>
           שליחת סרטון בוואטסאפ
         </a>
-        <a class="btn-ghost" href="#demo">נסו בעצמכם ↓</a>
+        <a class="btn-ghost" href="#how">איך זה עובד ↓</a>
       </div>
     </div>
     <div class="hero-visual">
       <div class="hero-frame">
-        <span class="hero-frame-badge">הבחירה של המנוע</span>
-        <img src="demo/winner-hi.webp" alt="הפריים שנבחר על ידי המנוע — התמונה הטובה ביותר מהסרטון" width="720" height="1280" fetchpriority="high" decoding="async">
+        <svg viewBox="0 0 340 440" role="img" aria-label="איור: פילם של סרטון שממנו המנוע בוחר את הפריים הטוב ביותר" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="hg-sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1a1a2e"/><stop offset="1" stop-color="#12121c"/>
+            </linearGradient>
+            <filter id="hg-glow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="8" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- film strip body -->
+          <rect x="50" y="8" width="240" height="424" rx="14" fill="#101018" stroke="rgba(255,255,255,0.08)"/>
+          <!-- sprocket holes -->
+          <g fill="rgba(255,255,255,0.12)">
+            <rect x="60" y="24" width="10" height="14" rx="3"/><rect x="60" y="66" width="10" height="14" rx="3"/><rect x="60" y="108" width="10" height="14" rx="3"/><rect x="60" y="150" width="10" height="14" rx="3"/><rect x="60" y="192" width="10" height="14" rx="3"/><rect x="60" y="234" width="10" height="14" rx="3"/><rect x="60" y="276" width="10" height="14" rx="3"/><rect x="60" y="318" width="10" height="14" rx="3"/><rect x="60" y="360" width="10" height="14" rx="3"/><rect x="60" y="402" width="10" height="14" rx="3"/>
+            <rect x="270" y="24" width="10" height="14" rx="3"/><rect x="270" y="66" width="10" height="14" rx="3"/><rect x="270" y="108" width="10" height="14" rx="3"/><rect x="270" y="150" width="10" height="14" rx="3"/><rect x="270" y="192" width="10" height="14" rx="3"/><rect x="270" y="234" width="10" height="14" rx="3"/><rect x="270" y="276" width="10" height="14" rx="3"/><rect x="270" y="318" width="10" height="14" rx="3"/><rect x="270" y="360" width="10" height="14" rx="3"/><rect x="270" y="402" width="10" height="14" rx="3"/>
+          </g>
+
+          <!-- frame 1: blurred (rejected) -->
+          <g class="hg-reject" opacity="0.55">
+            <rect x="84" y="22" width="172" height="118" rx="8" fill="url(#hg-sky)" stroke="rgba(255,107,107,0.45)"/>
+            <g opacity="0.6" filter="url(#hg-glow)">
+              <path d="M92 118 L128 78 L152 104 L182 66 L248 118 Z" fill="#2a2a3e"/>
+              <circle cx="226" cy="52" r="12" fill="#b26bff" opacity="0.5"/>
+              <circle cx="150" cy="88" r="10" fill="#3a3a52"/>
+              <rect x="140" y="98" width="20" height="22" rx="8" fill="#3a3a52"/>
+            </g>
+            <text x="94" y="132" font-size="10" fill="#ff6b6b" font-weight="700" font-family="Rubik, sans-serif" direction="rtl">✕ טשטוש</text>
+          </g>
+
+          <!-- frame 2: WINNER -->
+          <g>
+            <rect class="hg-winner-frame" x="80" y="156" width="180" height="128" rx="10" fill="url(#hg-sky)" stroke="#29f0e0" stroke-width="2" filter="url(#hg-glow)"/>
+            <path d="M88 272 L130 220 L156 250 L190 204 L252 272 Z" fill="#232338"/>
+            <circle cx="228" cy="184" r="14" fill="#b26bff" opacity="0.85"/>
+            <g>
+              <circle cx="152" cy="222" r="13" fill="#454564"/>
+              <path d="M146 220 a2.5 2.5 0 1 0 0.1 0 M156 220 a2.5 2.5 0 1 0 0.1 0" fill="#29f0e0"/>
+              <path d="M146 228 q6 5 12 0" stroke="#29f0e0" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <rect x="139" y="237" width="26" height="30" rx="10" fill="#454564"/>
+            </g>
+            <g class="hg-badge">
+              <circle cx="253" cy="163" r="13" fill="#29f0e0"/>
+              <path d="M247 163 l4 4 l8 -8" stroke="#06110f" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <text class="hg-badge-label" x="252" y="278" font-size="10.5" fill="#29f0e0" font-weight="700" font-family="Rubik, sans-serif" text-anchor="end" direction="rtl">הבחירה של המנוע</text>
+            <rect class="hg-scan" x="82" y="158" width="176" height="3" rx="1.5" fill="#29f0e0" opacity="0"/>
+          </g>
+
+          <!-- frame 3: eyes closed (rejected) -->
+          <g class="hg-reject hg-reject-2" opacity="0.55">
+            <rect x="84" y="300" width="172" height="118" rx="8" fill="url(#hg-sky)" stroke="rgba(255,107,107,0.45)"/>
+            <path d="M92 396 L128 356 L152 382 L182 344 L248 396 Z" fill="#2a2a3e"/>
+            <circle cx="226" cy="330" r="12" fill="#b26bff" opacity="0.5"/>
+            <g>
+              <circle cx="150" cy="366" r="10" fill="#3a3a52"/>
+              <path d="M145 365 h4 M151 365 h4" stroke="#8888a0" stroke-width="1.6" stroke-linecap="round"/>
+              <rect x="140" y="376" width="20" height="22" rx="8" fill="#3a3a52"/>
+            </g>
+            <text x="94" y="410" font-size="10" fill="#ff6b6b" font-weight="700" font-family="Rubik, sans-serif" direction="rtl">✕ עיניים עצומות</text>
+          </g>
+        </svg>
       </div>
     </div>
   </section>
 
-  <!-- S3: THE DEMO -->
-  <section id="demo" role="group" aria-label="הדגמה אינטראקטיבית של דירוג פריימים">
-    <div class="section-label">הדגמה חיה — פלט אמיתי של המנוע</div>
-    <h2 class="section-title">גררו על הפילם. שחררו. תראו למה הוא בחר.</h2>
-    <p class="section-sub">כל מספר שמופיע כאן חושב על ידי הצינור האמיתי על סרטון אמיתי — לא הדמיה. פריימים שנפסלו בשער מסומנים באדום, עם הסיבה.</p>
-
-    <div class="demo-shell">
-      <div class="demo-viewer" id="demo-viewer">
-        <img id="demo-viewer-img" src="demo/f06.webp" alt="פריים מהסרטון" width="360" height="640" decoding="async">
-        <span class="stamp-rejected" aria-hidden="true">נפסל</span>
-        <span class="stamp-winner" id="demo-winner-stamp" hidden>✓ הבחירה של המנוע</span>
+  <!-- S3: HOW IT WORKS (consumer 3 steps) -->
+  <section id="how" aria-label="איך זה עובד">
+    <div class="section-label center">איך זה עובד</div>
+    <h2 class="section-title" style="text-align:center; margin-inline:auto;">שלושה צעדים. בלי אפליקציה, בלי הרשמה.</h2>
+    <div class="how-flow">
+      <div class="how-step">
+        <div class="how-step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M15 10l5-3v10l-5-3M4 5h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg></div>
+        <div class="how-step-label">מצלמים סרטון קצר<br>(5–30 שניות)</div>
       </div>
-
-      <div class="demo-panel">
-        <div class="demo-panel-head">
-          <span class="demo-time" id="demo-time">0.0s</span>
-          <span class="demo-scene" id="demo-scene">דיוקן</span>
-        </div>
-        <div class="demo-final" id="demo-final">0.000</div>
-        <div class="demo-gate" id="demo-gate" hidden></div>
-        <div class="demo-reason" id="demo-reason"></div>
-        <span class="demo-chip" id="demo-duchenne" hidden>חיוך אמיתי ✦</span>
-        <div class="demo-bars">
-          <div class="demo-bar-row"><span class="demo-bar-label">חדות</span><span class="demo-bar-track"><span class="demo-bar-fill" id="bar-sharpness_norm"></span></span><span class="demo-bar-val" id="barval-sharpness_norm">0</span></div>
-          <div class="demo-bar-row"><span class="demo-bar-label">עיניים פקוחות</span><span class="demo-bar-track"><span class="demo-bar-fill" id="bar-eyes_open"></span></span><span class="demo-bar-val" id="barval-eyes_open">0</span></div>
-          <div class="demo-bar-row"><span class="demo-bar-label">חיוך</span><span class="demo-bar-track"><span class="demo-bar-fill" id="bar-smile"></span></span><span class="demo-bar-val" id="barval-smile">0</span></div>
-          <div class="demo-bar-row"><span class="demo-bar-label">מבט למצלמה</span><span class="demo-bar-track"><span class="demo-bar-fill" id="bar-gaze"></span></span><span class="demo-bar-val" id="barval-gaze">0</span></div>
-          <div class="demo-bar-row"><span class="demo-bar-label">קומפוזיציה</span><span class="demo-bar-track"><span class="demo-bar-fill" id="bar-composition"></span></span><span class="demo-bar-val" id="barval-composition">0</span></div>
-          <div class="demo-bar-row"><span class="demo-bar-label">תאורת פנים</span><span class="demo-bar-track"><span class="demo-bar-fill" id="bar-face_lighting"></span></span><span class="demo-bar-val" id="barval-face_lighting">0</span></div>
-        </div>
-        <button class="demo-replay" id="demo-replay" hidden type="button">▶ נגן שוב</button>
+      <div class="how-arrow" aria-hidden="true">←</div>
+      <div class="how-step">
+        <div class="how-step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg></div>
+        <div class="how-step-label">שולחים בוואטסאפ</div>
       </div>
-
-      <div class="demo-strip-wrap">
-        <div class="demo-strip" id="demo-strip">
-          <span class="demo-playhead" id="demo-playhead" aria-hidden="true"></span>
-          <input type="range" id="demo-range" min="0" max="6" step="1" value="0" aria-label="בחירת פריים בסרטון" aria-valuetext="פריים 1">
-        </div>
+      <div class="how-arrow" aria-hidden="true">←</div>
+      <div class="how-step">
+        <div class="how-step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+        <div class="how-step-label">מקבלים את התמונה המושלמת<br>+ חלופות והסבר</div>
       </div>
-      <p class="demo-note">זמן זורם מימין לשמאל, כמו קריאה בעברית. גרירה, מקלדת או מגע — הכל עובד.</p>
     </div>
-
-    <div id="demo-live" class="visually-hidden" aria-live="polite"></div>
-
-    <noscript>
-      <p class="section-sub">להדגמה האינטראקטיבית נדרש JavaScript. אלה הפריימים שנסרקו — המנצח מסומן:</p>
-      <div class="noscript-grid">
-        <img src="demo/f06.webp" alt="פריים 1 — נפסל: טשטוש" width="360" height="640">
-        <img src="demo/f07.webp" alt="פריים 2 — נפסל: עיניים עצומות" width="360" height="640">
-        <img src="demo/f02.webp" alt="פריים 3 — ציון 0.56" width="360" height="640">
-        <img src="demo/f01.webp" alt="פריים 4 — המנצח, ציון 0.57, חיוך אמיתי" width="360" height="640">
-        <img src="demo/f03.webp" alt="פריים 5 — ציון 0.50" width="360" height="640">
-        <img src="demo/f05.webp" alt="פריים 6 — נפסל: טשטוש" width="360" height="640">
-        <img src="demo/f04.webp" alt="פריים 7 — ציון 0.36" width="360" height="640">
-      </div>
-    </noscript>
   </section>
 
   <!-- S4: TWO-PASS MODEL -->
-  <section aria-label="איך המנוע חושב">
+  <section id="how-it-thinks" aria-label="איך המנוע חושב">
     <div class="section-label">מתחת למכסה</div>
     <h2 class="section-title">איך המנוע חושב — כמו צלם מקצועי, בשני מעברים</h2>
     <div class="passes">
@@ -516,10 +613,6 @@
         <div class="pass-num">01</div>
         <div class="pass-title">שערים קשיחים</div>
         <p class="pass-text">פריים עם עיניים עצומות או טשטוש חמור לא מתחרה בכלל — הוא נפסל, מסומן, ומקבל הסבר. בדיוק כמו שצלם זורק פריימים של מצמוץ בלי לחשוב פעמיים. שום דבר לא נמחק בשקט.</p>
-        <div class="gate-thumbs">
-          <div class="gate-thumb"><img src="demo/f07.webp" alt="פריים שנפסל: עיניים עצומות" width="360" height="640" loading="lazy" decoding="async"></div>
-          <div class="gate-thumb"><img src="demo/f05.webp" alt="פריים שנפסל: טשטוש חמור" width="360" height="640" loading="lazy" decoding="async"></div>
-        </div>
       </div>
       <div class="pass-card rank reveal">
         <div class="pass-num">02</div>
@@ -535,9 +628,9 @@
     <div class="section-label">לא קופסה שחורה</div>
     <h2 class="section-title">כל בחירה מגיעה עם הסבר</h2>
     <div class="stats">
-      <div class="reveal"><div class="stat-num">60</div><div class="stat-label">פריימים נסרקים לכל 30 שניות של וידאו</div></div>
-      <div class="reveal"><div class="stat-num">17</div><div class="stat-label">מדדים נמדדים לכל פריים — חדות, עיניים, חיוך, מבט ועוד</div></div>
-      <div class="reveal"><div class="stat-num">100%</div><div class="stat-label">מהבחירות מוסברות במילים, לא רק בציון</div></div>
+      <div class="reveal"><div class="stat-num" data-count="60">60</div><div class="stat-label">פריימים נסרקים לכל 30 שניות של וידאו</div></div>
+      <div class="reveal"><div class="stat-num" data-count="17">17</div><div class="stat-label">מדדים נמדדים לכל פריים — חדות, עיניים, חיוך, מבט ועוד</div></div>
+      <div class="reveal"><div class="stat-num" data-count="100" data-suffix="%">100%</div><div class="stat-label">מהבחירות מוסברות במילים, לא רק בציון</div></div>
     </div>
     <div class="terminal-card reveal" dir="ltr">
       <span class="prompt">&gt;</span> rank_01.jpg &nbsp;<span class="hl">final=0.570</span> &nbsp;reason: <span class="hl">"genuine smile, soft but above the blur gate"</span><br>
@@ -547,66 +640,45 @@
 
   <!-- S6: VALUE CARDS -->
   <section aria-label="יתרונות">
-    <div class="section-label">איך זה עוזר</div>
-    <h2 class="section-title">שלושה דברים שחוסכים לכם שעות</h2>
+    <div class="section-label">למה זה שווה</div>
+    <h2 class="section-title">תמונה ברמה של צלם — במחיר של סרטון מהטלפון</h2>
     <div class="value-grid">
       <div class="value-card reveal">
         <div class="value-num">01</div>
-        <div class="value-title">חוסך שעות של סינון ידני</div>
-        <div class="value-text">במקום לעבור על כל הצילום בעצמכם, מקבלים ישר את התמונות החדות והטובות ביותר — מדורגות ומוכנות.</div>
+        <div class="value-title">בלי לשלם אלפי שקלים</div>
+        <div class="value-text">צלם מקצועי לשעה עולה מאות עד אלפי שקלים. כאן צריך רק את הטלפון שכבר ביד — מצלמים כמה שניות וידאו, וזהו.</div>
       </div>
       <div class="value-card reveal">
         <div class="value-num">02</div>
-        <div class="value-title">עובד מהצילום שכבר קיים</div>
-        <div class="value-text">לא צריך צלם נוסף, ציוד חדש או צילום מיוחד — רק את הווידאו שכבר יש לכם, מהטלפון או מהמצלמה.</div>
+        <div class="value-title">וידאו קצר במקום 30 נסיונות</div>
+        <div class="value-text">בסרטון של 10 שניות יש מאות פריימים — הרבה יותר סיכויים לרגע מושלם מאשר בצילום בודד. המנוע מוצא בדיוק את הפריים שבו יצאתם הכי טוב.</div>
       </div>
       <div class="value-card reveal">
         <div class="value-num">03</div>
-        <div class="value-title">הצילום שלכם נשאר אצלכם</div>
-        <div class="value-text">המנוע רץ מקומית — הסרטונים של הלקוחות שלכם לא עולים לענן של אף אחד. פרטיות אמיתית, לא הבטחה.</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- S7: PROCESS -->
-  <section aria-label="התהליך">
-    <div class="section-label" style="text-align:center;">התהליך</div>
-    <div class="how-flow">
-      <div class="how-step">
-        <div class="how-step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M15 10l5-3v10l-5-3M4 5h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg></div>
-        <div class="how-step-label">שולחים וידאו</div>
-      </div>
-      <div class="how-arrow" aria-hidden="true">←</div>
-      <div class="how-step">
-        <div class="how-step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></div>
-        <div class="how-step-label">המנוע סורק וממיין</div>
-      </div>
-      <div class="how-arrow" aria-hidden="true">←</div>
-      <div class="how-step">
-        <div class="how-step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
-        <div class="how-step-label">בוחרים את המנצחות</div>
-      </div>
-      <div class="how-arrow" aria-hidden="true">←</div>
-      <div class="how-step">
-        <div class="how-step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 9l-5-5-5 5M12 4v13"/></svg></div>
-        <div class="how-step-label">מקבלים תמונות + דוח</div>
+        <div class="value-title">הסרטון שלכם נשאר פרטי</div>
+        <div class="value-text">המנוע רץ מקומית — הסרטון לא עולה לענן של אף אחד ולא מאמן שום מודל. פרטיות אמיתית, לא הבטחה.</div>
       </div>
     </div>
   </section>
 
   <!-- S8: AUDIENCES -->
   <section aria-label="למי זה מתאים">
-    <div class="section-label">שני מסלולים, מנוע אחד</div>
+    <div class="section-label">שלושה מסלולים, מנוע אחד</div>
     <h2 class="section-title">למי זה מתאים</h2>
     <div class="audiences">
+      <div class="aud-card primary reveal">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>לכל אחד ואחת</h3>
+        <p>טיול עם נוף מטורף, דייט ראשון, תמונת פרופיל ללינקדאין, רגע עם הילדים בים — כל פעם שרוצים תמונה אחת ממש טובה בלי לשכור צלם. מצלמים סרטון קצר (או מבקשים מחבר), שולחים, ומקבלים חזרה את הפריים שבו כולם יצאו הכי טוב — עם הסבר קצר למה דווקא הוא.</p>
+        <p class="aud-note">בשלב הבטא זה חינם: שולחים סרטון בוואטסאפ, מקבלים תמונה + חלופות. בלי אפליקציה ובלי הרשמה.</p>
+        <a class="aud-cta" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%A6%D7%99%D7%9C%D7%9E%D7%AA%D7%99%20%D7%A1%D7%A8%D7%98%D7%95%D7%9F%20%D7%A7%D7%A6%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A7%D7%91%D7%9C%20%D7%9E%D7%9E%D7%A0%D7%95%20%D7%90%D7%AA%20%D7%94%D7%AA%D7%9E%D7%95%D7%A0%D7%94%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9E%D7%AA" target="_blank" rel="noopener">שליחת סרטון עכשיו — חינם</a>
+      </div>
       <div class="aud-card reveal">
-        <h3>לצלמי אירועים 📸</h3>
-        <p>חתונות, בר/בת מצווה, אירועים — מצלמים היום יותר ויותר וידאו, ואז יושבים שעות למיין. המנוע עובר על תיקייה שלמה של קליפים ומחזיר תמונות מדורגות עם דוח ויזואלי לכל קליפ. עיניים עצומות של אורח אחד בתמונה קבוצתית? נתפס אוטומטית.</p>
-        <p class="aud-note">בשלב הבטא: שולחים סרטון בוואטסאפ, מקבלים חזרה תמונות מדורגות + דוח. בלי התקנות.</p>
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg>לצלמי אירועים</h3>
+        <p>מצלמים באירועים יותר ויותר וידאו, ואז יושבים שעות למיין. המנוע עובר על תיקייה שלמה של קליפים ומחזיר תמונות מדורגות עם דוח לכל קליפ — כולל זיהוי עיניים עצומות בתמונות קבוצתיות.</p>
         <a class="aud-cta" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%90%D7%A0%D7%99%20%D7%A6%D7%9C%D7%9D%2F%D7%AA%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A0%D7%A1%D7%95%D7%AA%20%D7%90%D7%AA%20%D7%94%D7%A8%D7%92%D7%A2%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9D" target="_blank" rel="noopener">אני צלם/ת — בואו נדבר</a>
       </div>
       <div class="aud-card reveal">
-        <h3>לעסקים קטנים 🛍️</h3>
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 8V6a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v2M4.5 8h15l.9 12.1a1 1 0 0 1-1 1.09H4.6a1 1 0 0 1-1-1.09L4.5 8Z"/></svg>לעסקים קטנים</h3>
         <p>סרטון קצר של המוצר מהטלפון הופך לתמונות קטלוג נקיות וחדות. המנוע מזהה לבד שאין פנים בפריים ועובר לפרופיל מוצר — חדות וקומפוזיציה בלבד. מושלם לחנויות אונליין, תפריטים ודפי מוצר.</p>
         <p class="aud-note">משתלב עם האוטומציות של FlowUp — מהסרטון ועד המודעה.</p>
         <a class="aud-cta" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A2%D7%A1%D7%A7%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%AA%D7%9E%D7%95%D7%A0%D7%95%D7%AA%20%D7%9E%D7%95%D7%A6%D7%A8%20%D7%9E%D7%94%D7%A1%D7%A8%D7%98%D7%95%D7%9F" target="_blank" rel="noopener">יש לי עסק — בואו נדבר</a>
@@ -616,9 +688,9 @@
 
   <!-- S9: FINAL CTA -->
   <section class="cta-final" aria-label="יצירת קשר">
-    <h2>יש לכם וידאו שמחכה לסינון?</h2>
-    <p>שולחים בוואטסאפ, מקבלים תשובה אישית עם מה שהתמונות שלכם יכולות להיות.</p>
-    <a class="btn-primary" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A2%D7%9C%20%D7%94%D7%A8%D7%92%D7%A2%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9D" target="_blank" rel="noopener">
+    <h2>יש לכם סרטון עם רגע טוב בפנים?</h2>
+    <p>שולחים אותו בוואטסאפ עכשיו — ומקבלים חזרה את התמונה המושלמת. חינם בשלב הבטא.</p>
+    <a class="btn-primary" href="https://wa.me/972547676000?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%A6%D7%99%D7%9C%D7%9E%D7%AA%D7%99%20%D7%A1%D7%A8%D7%98%D7%95%D7%9F%20%D7%A7%D7%A6%D7%A8%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A7%D7%91%D7%9C%20%D7%9E%D7%9E%D7%A0%D7%95%20%D7%90%D7%AA%20%D7%94%D7%AA%D7%9E%D7%95%D7%A0%D7%94%20%D7%94%D7%9E%D7%95%D7%A9%D7%9C%D7%9E%D7%AA" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.8L2 22l5.42-1.42a9.9 9.9 0 0 0 4.62 1.18h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.13-2.9-7C17.17 3.03 14.69 2 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.42a8.2 8.2 0 0 1 2.42 5.82c0 4.55-3.7 8.24-8.25 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.25-4.38c0-4.55 3.7-8.24 8.25-8.24m-4.52 4.7c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.03 0 1.2.87 2.35 1 2.52.12.16 1.7 2.6 4.12 3.64.58.25 1.02.4 1.37.51.58.18 1.1.16 1.52.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.32-.75-1.8-.2-.47-.4-.4-.54-.41-.14-.01-.3-.01-.46-.01Z"/></svg>
       שליחת סרטון בוואטסאפ
     </a>
@@ -659,6 +731,52 @@
       });
     }, { rootMargin: "-40px" });
     els.forEach(function (el) { io.observe(el); });
+  })();
+
+  // stat counters: count up when scrolled into view
+  (function () {
+    var nums = document.querySelectorAll(".stat-num[data-count]");
+    if (!nums.length) return;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function animate(el) {
+      var target = parseInt(el.getAttribute("data-count"), 10);
+      var suffix = el.getAttribute("data-suffix") || "";
+      if (reduce || isNaN(target)) { el.textContent = target + suffix; return; }
+      var start = null, dur = 1300;
+      function step(t) {
+        if (start === null) start = t;
+        var p = Math.min((t - start) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(eased * target) + suffix;
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    if (!("IntersectionObserver" in window)) { nums.forEach(animate); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { animate(e.target); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.4 });
+    nums.forEach(function (el) { io.observe(el); });
+  })();
+
+  // hero frame tilt (fine pointers only, respects reduced motion)
+  (function () {
+    var frame = document.querySelector(".hero-frame");
+    if (!frame) return;
+    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (reduceMotion || !canHover) return;
+    var rect = null;
+    frame.addEventListener("pointerenter", function () { rect = frame.getBoundingClientRect(); });
+    frame.addEventListener("pointermove", function (e) {
+      if (!rect) rect = frame.getBoundingClientRect();
+      var px = (e.clientX - rect.left) / rect.width - 0.5;
+      var py = (e.clientY - rect.top) / rect.height - 0.5;
+      frame.style.transform = "perspective(700px) rotateY(" + (px * 10).toFixed(2) + "deg) rotateX(" + (py * -10).toFixed(2) + "deg) scale(1.02)";
+    });
+    frame.addEventListener("pointerleave", function () { frame.style.transform = ""; });
   })();
 </script>
 <script src="demo.js" defer></script>
