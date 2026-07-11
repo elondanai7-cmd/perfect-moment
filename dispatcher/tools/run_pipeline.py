@@ -34,6 +34,8 @@ def unique_dest(dest: Path) -> Path:
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("video", help="path to video file (usually in inbox/)")
     ap.add_argument("--top-n", type=int, default=5)

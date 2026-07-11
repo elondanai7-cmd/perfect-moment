@@ -29,6 +29,7 @@ import gradio as gr
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from perfectmoment import config, extract, pipeline  # noqa: E402
+from perfectmoment.aesthetics import AestheticScorer  # noqa: E402
 
 MODEL_URL = (
     "https://storage.googleapis.com/mediapipe-models/face_landmarker/"
@@ -117,6 +118,21 @@ def _ensure_face_model() -> None:
     urllib.request.urlretrieve(MODEL_URL, dest)
 
 
+# Lazy singleton, not a per-request load: without this, every single visitor
+# paid the NIMA model load (~2.5s) on top of their own video's processing
+# time. Lazy (not eager at import) keeps `import app` fast for tooling/tests
+# that never actually serve a request.
+_scorer_singleton: AestheticScorer | None = None
+
+
+def _get_scorer() -> AestheticScorer:
+    global _scorer_singleton
+    if _scorer_singleton is None:
+        _ensure_face_model()
+        _scorer_singleton = AestheticScorer()
+    return _scorer_singleton
+
+
 def process_video(video_path: str, request: gr.Request, progress: gr.Progress = gr.Progress()):
     if not video_path:
         return [], "העלה סרטון קודם.", gr.update(visible=False)
@@ -154,7 +170,6 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         return [], msg, gr.update(visible=False)
 
     progress(0, desc="מכין...")
-    _ensure_face_model()
     _sweep_stale_temp_dirs()
 
     work_root = Path(tempfile.mkdtemp(prefix="pm_web_"))
@@ -181,6 +196,7 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
             fps=config.DEFAULT_FPS,
             on_progress=on_progress,
             make_report=False,
+            scorer=_get_scorer(),
         )
     except Exception as exc:  # noqa: BLE001 — surface any pipeline error to the visitor, don't crash the app
         msg = f"משהו השתבש: {exc}"

@@ -43,6 +43,8 @@ def scan() -> list[dict]:
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     results = scan()
     if not results:
         print(json.dumps({"inbox": "empty"}))
