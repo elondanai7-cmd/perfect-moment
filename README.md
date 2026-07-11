@@ -92,13 +92,22 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-32 tests cover every stage (extract/quality/faces/rank/pipeline/output) using
-synthetic ffmpeg-generated fixtures plus one real portrait photo (cached
-per session, skipped automatically if offline). Includes explicit regression
-tests for real bugs found during the build: the AC-16 4K-boundary off-by-one,
-the AC-14 all-frames-rejected edge case that used to export zero frames, and
-the v2 scoring model's relative-blur-gate edge case (a clip with no
-sharpness variance used to gate every frame, including the better one).
+44 tests total: 32 cover every core pipeline stage (extract/quality/faces/rank/
+pipeline/output) using synthetic ffmpeg-generated fixtures plus one real
+portrait photo (cached per session, skipped automatically if offline), and 12
+more (`tests/test_webapp.py`) cover the Gradio web app (guardrails, job
+logging, feedback matching). Includes explicit regression tests for real bugs
+found during the build: the AC-16 4K-boundary off-by-one, the AC-14
+all-frames-rejected edge case that used to export zero frames, and the v2
+scoring model's relative-blur-gate edge case (a clip with no sharpness
+variance used to gate every frame, including the better one).
+
+## Web app (self-serve, Hugging Face Spaces)
+
+`webapp/app.py` is a Gradio app wrapping this same pipeline — a visitor
+uploads a video and gets the ranked stills back in-browser, no manual step.
+Run locally: `pip install -r webapp/requirements.txt && python webapp/app.py`.
+Deploy instructions (free HF Spaces CPU tier): `webapp/DEPLOY.md`.
 
 ## Graceful degrade behavior
 
