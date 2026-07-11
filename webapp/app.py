@@ -289,6 +289,20 @@ if __name__ == "__main__":
     # the process to bind 0.0.0.0; local dev keeps Gradio's own default.
     port = int(os.environ.get("PORT", 0)) or None
     host = "0.0.0.0" if port else None
+
+    if host:
+        # Gradio's launch() self-verifies reachability by making an HTTP
+        # request to http://{server_name}:{server_port}/ before printing the
+        # URL. On Render (and most container platforms) 0.0.0.0 is a valid
+        # bind address but not a valid address to *connect to* -- the check
+        # fails even though the server is actually up and reachable
+        # externally, and gradio treats that as fatal (raises ValueError,
+        # crashing the process) unless share=True. Skip the check: we've
+        # already confirmed the server binds and serves correctly, this
+        # self-ping is the only thing that's broken.
+        import gradio.networking as _gr_networking
+        _gr_networking.url_ok = lambda url: True
+
     demo.queue(default_concurrency_limit=1, max_size=10).launch(
         share=share, server_name=host, server_port=port
     )
