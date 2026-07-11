@@ -132,12 +132,28 @@ def _real_client_ip(request: gr.Request | None) -> str:
 
 
 def _ensure_face_model() -> None:
-    """First-run download of the face landmark model (gitignored, ~a few MB)."""
+    """First-run download of the face landmark model (gitignored, ~a few MB).
+
+    urlretrieve has no default timeout -- on a slow/stalled connection (seen
+    on Render's free tier) this hung indefinitely on the very first real
+    request, with no progress feedback and no way to recover except
+    restarting the instance. A bounded timeout turns that into a normal
+    caught exception (process_video already wraps this in try/except),
+    so the visitor gets an error message instead of an infinite spinner.
+    Writes to a temp file first so a failed/partial download never leaves
+    a corrupt model file that `dest.exists()` would treat as done.
+    """
     dest = config.FACE_LANDMARKER_MODEL_PATH
     if dest.exists():
         return
     dest.parent.mkdir(parents=True, exist_ok=True)
-    urllib.request.urlretrieve(MODEL_URL, dest)
+    tmp_dest = dest.with_suffix(dest.suffix + ".part")
+    try:
+        with urllib.request.urlopen(MODEL_URL, timeout=30) as resp, tmp_dest.open("wb") as f:
+            shutil.copyfileobj(resp, f)
+        tmp_dest.rename(dest)
+    finally:
+        tmp_dest.unlink(missing_ok=True)
 
 
 # Lazy singleton, not a per-request load: without this, every single visitor

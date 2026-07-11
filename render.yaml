@@ -5,7 +5,8 @@ services:
     plan: free
     buildCommand: >
       pip install --extra-index-url https://download.pytorch.org/whl/cpu
-      -r webapp/requirements.txt
+      -r webapp/requirements.txt &&
+      python scripts/fetch_model.py
     startCommand: python webapp/app.py
     envVars:
       - key: PYTHON_VERSION
