@@ -264,9 +264,15 @@ if __name__ == "__main__":
     import os
 
     # concurrency_limit=1: one video processed at a time — this runs on a
-    # single home machine behind a tunnel, not a scalable server.
+    # single free-tier instance, not a scalable server.
     # PM_SHARE=1 opts into Gradio's own free public tunnel (a temporary
     # *.gradio.live link) for running the pilot from this machine instead of
-    # a paid host — off by default so local dev doesn't open a public link.
+    # a hosted deploy — off by default so local dev doesn't open a public link.
     share = os.environ.get("PM_SHARE") == "1"
-    demo.queue(default_concurrency_limit=1, max_size=10).launch(share=share)
+    # Render (and most PaaS free tiers) assign the port via $PORT and expect
+    # the process to bind 0.0.0.0; local dev keeps Gradio's own default.
+    port = int(os.environ.get("PORT", 0)) or None
+    host = "0.0.0.0" if port else None
+    demo.queue(default_concurrency_limit=1, max_size=10).launch(
+        share=share, server_name=host, server_port=port
+    )

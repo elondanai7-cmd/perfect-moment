@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: perfect-moment
+    runtime: python
+    plan: free
+    buildCommand: >
+      pip install --extra-index-url https://download.pytorch.org/whl/cpu
+      -r webapp/requirements.txt
+    startCommand: python webapp/app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
