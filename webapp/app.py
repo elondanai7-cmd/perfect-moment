@@ -31,6 +31,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from perfectmoment import config, extract, pipeline  # noqa: E402
 from perfectmoment.aesthetics import AestheticScorer  # noqa: E402
 
+# gradio_client 1.5.2 (pinned by gradio==5.9.1) crashes generating the
+# auto "view API" schema whenever a JSON-Schema sub-node is a bare bool
+# (e.g. "additionalProperties": true) -- a valid JSON Schema shape that
+# this older code assumes is always a dict, raising
+# "TypeError: argument of type 'bool' is not iterable" and taking down
+# the whole request. It's triggered by the frontend fetching /info on
+# every page load, so it crashes real visitors, not just at startup.
+# Patch the recursive converter to treat a bool schema as "Any" instead
+# of crashing; every other schema shape still goes through the original.
+import gradio_client.utils as _gr_client_utils  # noqa: E402
+
+_orig_json_schema_to_python_type = _gr_client_utils._json_schema_to_python_type
+
+
+def _safe_json_schema_to_python_type(schema, defs):
+    if isinstance(schema, bool):
+        return "Any"
+    return _orig_json_schema_to_python_type(schema, defs)
+
+
+_gr_client_utils._json_schema_to_python_type = _safe_json_schema_to_python_type
+
 MODEL_URL = (
     "https://storage.googleapis.com/mediapipe-models/face_landmarker/"
     "face_landmarker/float16/1/face_landmarker.task"
