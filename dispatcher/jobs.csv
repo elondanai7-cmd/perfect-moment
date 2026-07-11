@@ -1,1 +1,1 @@
-timestamp,video,status,exported_count,top_score,notes,feedback
+timestamp,video,status,exported_count,top_score,notes,feedback,pipeline_top_frame,human_top_frame

@@ -10,7 +10,11 @@ as printed by run_pipeline.py.
 Approve path:
   - copies approved rank_*.jpg + manifest.json to done/<job>/
   - writes done/<job>/reply.txt — ready-to-paste Hebrew WhatsApp message
-  - appends a row to jobs.csv
+  - appends a row to jobs.csv, including the pipeline's unassisted top pick
+    (pipeline_top_frame) alongside what the human actually sent
+    (human_top_frame) -- comparing these two is the real calibration signal
+    for config.py's scoring weights, since a pilot rating alone can't tell
+    you whether the algorithm or the human QA step produced the good result.
   - cleans up processing/ leftovers (video + out dir)
 
 Review path:
@@ -48,10 +52,25 @@ REPLY_TEMPLATE = """היי! 👋
 """
 
 
-def log_row(video: str, status: str, exported: int, top_score, notes: str, feedback: str = "") -> None:
+def log_row(
+    video: str,
+    status: str,
+    exported: int,
+    top_score,
+    notes: str,
+    feedback: str = "",
+    pipeline_top_frame: str = "",
+    human_top_frame: str = "",
+) -> None:
+    # pipeline_top_frame/human_top_frame let us compare what the algorithm
+    # picked unassisted vs what the human actually sent, without touching the
+    # pilot's rating -- that comparison is the real calibration signal for
+    # config.py's scoring weights (a >=4/5 rating alone can't tell you if the
+    # algorithm or the human QA step produced the good result).
     with JOBS_CSV.open("a", newline="", encoding="utf-8") as f:
         csv.writer(f).writerow(
-            [time.strftime("%Y-%m-%d %H:%M:%S"), video, status, exported, top_score, notes, feedback]
+            [time.strftime("%Y-%m-%d %H:%M:%S"), video, status, exported, top_score, notes, feedback,
+             pipeline_top_frame, human_top_frame]
         )
 
 
@@ -80,6 +99,9 @@ def main() -> int:
     video_name = Path(manifest.get("video", job)).name
     frames = {f["output_file"]: f for f in manifest.get("frames", [])}
     top_score = manifest["frames"][0]["final"] if manifest.get("frames") else ""
+    # The manifest's frames are pre-sorted best-first by the pipeline, before
+    # any human QA touches them -- this is the algorithm's unassisted pick.
+    pipeline_top_frame = manifest["frames"][0]["output_file"] if manifest.get("frames") else ""
 
     if args.review:
         dest = FAILED / job
@@ -87,7 +109,8 @@ def main() -> int:
         for f in out_dir.iterdir():
             shutil.copy2(f, dest / f.name)
         (dest / "review-reason.txt").write_text(args.review, encoding="utf-8")
-        log_row(video_name, "needs_review", len(frames), top_score, args.review)
+        log_row(video_name, "needs_review", len(frames), top_score, args.review,
+                pipeline_top_frame=pipeline_top_frame)
         cleanup_processing(job)
         print(json.dumps({"ok": True, "status": "needs_review", "dir": str(dest)}, ensure_ascii=False))
         return 0
@@ -107,7 +130,8 @@ def main() -> int:
     reply = REPLY_TEMPLATE.format(count=len(args.approve), file_lines=file_lines)
     (dest / "reply.txt").write_text(reply, encoding="utf-8")
 
-    log_row(video_name, "done", len(args.approve), top_score, "")
+    log_row(video_name, "done", len(args.approve), top_score, "",
+            pipeline_top_frame=pipeline_top_frame, human_top_frame=args.approve[0])
     cleanup_processing(job)
 
     print(json.dumps({
