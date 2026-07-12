@@ -102,12 +102,14 @@ all-frames-rejected edge case that used to export zero frames, and the v2
 scoring model's relative-blur-gate edge case (a clip with no sharpness
 variance used to gate every frame, including the better one).
 
-## Web app (self-serve, Hugging Face Spaces)
+## Web app (self-serve)
 
 `webapp/app.py` is a Gradio app wrapping this same pipeline — a visitor
 uploads a video and gets the ranked stills back in-browser, no manual step.
 Run locally: `pip install -r webapp/requirements.txt && python webapp/app.py`.
-Deploy instructions (free HF Spaces CPU tier): `webapp/DEPLOY.md`.
+For the live pilot, `bash webapp/start.sh` also opens a free public tunnel —
+see `webapp/DEPLOY.md` for why (HF Spaces free tier is blocked, Render's
+free tier OOMs on this stack) and how.
 
 ## Graceful degrade behavior
 

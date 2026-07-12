@@ -1,6 +1,7 @@
-# Space-specific requirements file. Deploy instructions: see webapp/DEPLOY.md
-# This file must be copied/renamed to the Space repo ROOT as `requirements.txt`
-# (Hugging Face Spaces only reads requirements.txt from the repo root).
+# Webapp-specific requirements (adds gradio + torch on top of the core
+# package's deps). Used directly in place -- by render.yaml's buildCommand
+# and by local dev (`pip install -r webapp/requirements.txt`). See
+# webapp/DEPLOY.md for the current deploy situation.
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch
 opencv-python-headless==5.0.0.93

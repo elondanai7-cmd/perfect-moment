@@ -1,4 +1,4 @@
-"""Perfect Moment — web app (Hugging Face Spaces).
+"""Perfect Moment — self-serve web app.
 
 This IS the "connected agents" flow the founder asked for, made real instead
 of fake theater:
@@ -9,9 +9,13 @@ of fake theater:
   Agent 1 (this file, again):    reads Agent 2's output back and shows the
       best frames to the visitor immediately. No WhatsApp, no manual step.
 
-Cost: $0. Runs on a free HF Spaces CPU tier. No paid API is called anywhere
-in this file — the "AI" is the same local scoring pipeline already tested in
-perfectmoment/, not an LLM call.
+Cost: $0. HF Spaces' free tier no longer supports this (policy change,
+2026-07: new accounts need paid PRO for cpu-basic Gradio Spaces) and
+Render's free tier can't fit the ~1GB RSS this stack needs (torch + NIMA),
+so this currently runs from the founder's own machine via `webapp/start.sh`
+(app + a free cloudflared tunnel) -- see PILOT.md. No paid API is called
+anywhere in this file — the "AI" is the same local scoring pipeline already
+tested in perfectmoment/, not an LLM call.
 """
 
 from __future__ import annotations
@@ -200,7 +204,13 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         return [], f"רגע, לאט 🙂 אפשר עוד ניסיון בעוד כ-{wait:.0f} שניות.", gr.update(visible=False)
     _last_request_at[client] = now
 
-    size_mb = src.stat().st_size / (1024 * 1024)
+    try:
+        size_mb = src.stat().st_size / (1024 * 1024)
+    except OSError as exc:  # noqa: BLE001 — Gradio's temp upload can vanish/be inaccessible; don't crash the app
+        msg = f"לא הצלחתי לקרוא את הקובץ שהועלה: {exc}"
+        _log_job({"timestamp": job_timestamp, "video": src.name, "status": "unreadable",
+                   "exported_count": 0, "top_score": "", "notes": str(exc), "feedback": ""})
+        return [], msg, gr.update(visible=False)
     if size_mb > MAX_UPLOAD_MB:
         msg = f"הקובץ גדול מדי ({size_mb:.0f}MB). מקסימום {MAX_UPLOAD_MB}MB — נסה סרטון קצר/דחוס יותר."
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "rejected_size",

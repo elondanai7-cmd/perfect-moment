@@ -1,66 +1,49 @@
-# פריסה לאתר חי (Hugging Face Spaces, חינם)
+# פריסה לאתר חי
 
-זה בונה אתר אמיתי: מבקר מעלה סרטון → הפייפליין רץ אוטומטית בשרת → התמונות
-הכי טובות חוזרות אליו על המסך. בלי וואטסאפ, בלי שלב ידני. עלות: **$0**.
+זה בונה אתר אמיתי: מבקר מעלה סרטון → הפייפליין רץ אוטומטית → התמונות הכי
+טובות חוזרות אליו על המסך. בלי וואטסאפ, בלי שלב ידני. עלות: **$0**.
 
-דורש חשבון חינמי ב-huggingface.co (אם אין לך עדיין — הירשם שם קודם).
+## המצב הנוכחי (עודכן 2026-07-12)
 
-## שלבים (פעם אחת, ~10 דקות)
+נוסו שתי אפשרויות אירוח בענן וגם החינמי שלהן לא מספיק:
 
-1. **התחברות** (בטרמינל, בתיקיית הפרויקט):
-   ```
-   hf auth login
-   ```
-   יבקש טוקן — צור אחד ב־huggingface.co/settings/tokens עם הרשאת "Write".
+- **Hugging Face Spaces** — חסום: מדיניות שינתה, חשבונות חינמיים חדשים לא
+  יכולים ליצור Gradio Space על ה-tier החינמי (cpu-basic) בלי מנוי PRO בתשלום.
+- **Render.com** — נוסה ופרוס בהצלחה מבחינת קוד, אבל ה-tier החינמי נותן רק
+  512MB RAM, וה-stack הזה (torch + NIMA) צריך בפועל כ-**1GB RSS** (נמדד
+  מקומית). התוצאה: ה-instance נהרג (OOM) בכל בקשה אמיתית. **השירות מושעה.**
 
-2. **בניית תיקיית ה-Space** (עותק נקי, בלי טסטים/וידאו/git history):
-   ```
-   mkdir -p ../perfect-moment-space/perfectmoment
-   cp -r perfectmoment/*.py ../perfect-moment-space/perfectmoment/
-   cp webapp/app.py ../perfect-moment-space/app.py
-   cp webapp/requirements.txt ../perfect-moment-space/requirements.txt
-   ```
-   ואז ערוך ב-`../perfect-moment-space/app.py` את השורה
-   `sys.path.insert(0, str(Path(__file__).resolve().parent.parent))`
-   ל-`sys.path.insert(0, str(Path(__file__).resolve().parent))`
-   (כי עכשיו `perfectmoment/` יושב ליד `app.py`, לא תיקייה מעליו).
+**הפתרון העובד כרגע: להריץ מהמחשב שלך.**
 
-3. **צור את ה-Space** (שם לבחירה, למשל `perfect-moment`):
-   ```
-   hf repo create perfect-moment --type space --space_sdk gradio
-   ```
+```
+bash webapp/start.sh
+```
 
-4. **הוסף את קובץ ה-README עם ה-card** — צור
-   `../perfect-moment-space/README.md`:
-   ```
-   ---
-   title: הרגע המושלם
-   emoji: 📸
-   sdk: gradio
-   sdk_version: 5.9.1
-   app_file: app.py
-   pinned: false
-   ---
-   ```
+זה מרים את `webapp/app.py` + מנהרת [cloudflared](https://github.com/cloudflare/cloudflared)
+חינמית, ומדפיס קישור ציבורי (`https://*.trycloudflare.com`). שולחים את
+הקישור הזה לאנשי הפיילוט. עוצרים עם:
 
-5. **פוש**:
-   ```
-   cd ../perfect-moment-space
-   git init
-   git remote add origin https://huggingface.co/spaces/<היוזר-שלך>/perfect-moment
-   git add .
-   git commit -m "initial deploy"
-   git push -u origin main
-   ```
+```
+bash webapp/stop.sh
+```
 
-6. תוך כמה דקות ה-Space יבנה את עצמו (רואים לוג בנייה באתר). כשמוכן —
-   הכתובת `https://huggingface.co/spaces/<היוזר-שלך>/perfect-moment` היא
-   האתר החי שלך. אפשר לשים אותה כ-iframe או קישור מתוך `landing/index.html`.
+**מגבלות:** המחשב חייב להישאר דלוק כל עוד רוצים שהקישור יעבוד, והקישור
+משתנה בכל הפעלה מחדש (צריך לשלוח קישור חדש). דורש `cloudflared` מותקן
+(`winget install --id Cloudflare.cloudflared -e`).
+
+## אם בעתיד רוצים לחזור לניסיון אירוח בענן
+
+- **Render בתשלום** (Starter, ~$7/חודש) — נותן מספיק RAM. הקוד וה-`render.yaml`
+  כבר מוכנים ב-repo; רק צריך לשדרג את השירות המושעה.
+- **הורדת NIMA מהפייפליין** — אם רוצים להישאר על ה-tier החינמי, אפשר להסיר
+  את שלב ה-aesthetic scoring (`perfectmoment/aesthetics.py`) ולהישען רק על
+  faces/quality/composition. זה יוריד את דרישת הזיכרון משמעותית אבל יפגע
+  באיכות הדירוג — לא נוסה.
 
 ## מה זה בפועל, בלי באזז
 
 - "סוכן 1" = הדף עצמו (Gradio) — מקבל את הווידאו.
-- "סוכן 2" = `perfectmoment.pipeline.run()` — אותו קוד בדיוק שכבר עבר 32
+- "סוכן 2" = `perfectmoment.pipeline.run()` — אותו קוד בדיוק שעבר 44
   טסטים, לא LLM, לא API בתשלום. הוא זה שבודק חדות/עיניים/חיוך/קומפוזיציה
   ומחזיר את התמונות הכי טובות.
 - שלב ה-QA הוויזואלי הידני של `dispatcher/` (שבו Claude מסתכל בעצמו על
