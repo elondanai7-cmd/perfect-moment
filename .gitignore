@@ -8,3 +8,5 @@ venv/
 .pytest_cache/
 .gradio/
 webapp/*.log
+webapp/.pids
+webapp/jobs.csv
