@@ -35,7 +35,7 @@ echo "Starting web app server..."
 PYTHONUNBUFFERED=1 python -u "$WEBAPP/app.py" > "$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
 
-for i in $(seq 1 60); do
+for i in $(seq 1 150); do
   if grep -qE "Running on local URL" "$SERVER_LOG" 2>/dev/null; then
     break
   fi
@@ -49,7 +49,7 @@ done
 
 LOCAL_URL=$(grep -oE "http://127\.0\.0\.1:[0-9]+" "$SERVER_LOG" | head -1)
 if [ -z "$LOCAL_URL" ]; then
-  echo "Server didn't report a local URL within 60s. Check $SERVER_LOG" >&2
+  echo "Server didn't report a local URL within 150s. Check $SERVER_LOG" >&2
   kill "$SERVER_PID" 2>/dev/null || true
   exit 1
 fi

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://perfectmoment.flowup.co.il/sitemap.xml

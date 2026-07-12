@@ -12,7 +12,11 @@
 <meta property="og:description" content="מצלמים כמה שניות וידאו במקום 30 תמונות — AI בוחר את הפריים שבו אתם יוצאים הכי טוב, ומסביר למה.">
 <meta property="og:url" content="https://perfectmoment.flowup.co.il/">
 <meta property="og:locale" content="he_IL">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://perfectmoment.flowup.co.il/demo/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://perfectmoment.flowup.co.il/demo/og.jpg">
 <link rel="canonical" href="https://perfectmoment.flowup.co.il/">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Service","name":"הרגע המושלם","serviceType":"חילוץ התמונה הטובה ביותר מסרטון באמצעות AI","description":"שולחים סרטון קצר בוואטסאפ ומקבלים חזרה את הפריים המושלם — בלי צלם","areaServed":"IL","offers":{"@type":"Offer","price":"0","priceCurrency":"ILS","description":"בטא חינם"}}
@@ -37,7 +41,14 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+    /* Dark-only design: without this, native controls (the demo range
+       slider, scrollbars) can render with light-mode chrome on some
+       browsers/OSes, clashing with the page. */
+    color-scheme: dark;
+  }
+  a, button { -webkit-tap-highlight-color: transparent; }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -97,8 +108,9 @@
   .logo span { color: var(--cyan); }
   .nav-cta {
     font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); text-decoration: none;
-    border: 1px solid var(--line); padding: 9px 18px; border-radius: 999px;
-    transition: all 0.25s ease;
+    border: 1px solid var(--line); padding: 12px 18px; border-radius: 999px;
+    display: inline-flex; align-items: center; min-height: 44px;
+    transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease;
   }
   .nav-cta:hover { color: var(--bg); background: var(--cyan); border-color: var(--cyan); }
 
@@ -123,6 +135,7 @@
   h1 {
     font-family: var(--font-display); font-weight: 900;
     font-size: clamp(2.5rem, 5vw, 4.1rem); line-height: 1.1; margin-bottom: 24px;
+    text-wrap: balance;
   }
   h1 .accent {
     background: linear-gradient(95deg, var(--cyan), var(--violet));
@@ -205,6 +218,7 @@
   .section-title {
     font-family: var(--font-display); font-weight: 900;
     font-size: clamp(1.5rem, 2.6vw, 2.1rem); margin-bottom: 14px; max-width: 34ch;
+    text-wrap: balance;
   }
   .section-sub { color: var(--ink-dim); font-size: 1rem; margin-bottom: 40px; max-width: 60ch; }
 
@@ -452,7 +466,8 @@
   .aud-cta {
     align-self: flex-start;
     font-weight: 600; font-size: 0.9rem; color: var(--cyan); text-decoration: none;
-    border: 1px solid rgba(41,240,224,0.35); border-radius: 10px; padding: 10px 18px;
+    border: 1px solid rgba(41,240,224,0.35); border-radius: 10px; padding: 12px 18px;
+    display: inline-flex; align-items: center; min-height: 44px;
     transition: background 0.2s ease;
   }
   .aud-cta:hover { background: rgba(41,240,224,0.08); }
@@ -463,9 +478,16 @@
   .cta-final p { color: var(--ink-dim); font-size: 1.02rem; margin-bottom: 34px; }
 
   footer { border-top: 1px solid var(--line); padding: 26px 0; text-align: center; font-size: 0.8rem; color: var(--ink-dim); opacity: 0.6; }
+  footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+  footer a:hover { color: var(--cyan); }
 
   .float-wa {
-    position: fixed; bottom: 26px; left: 26px; z-index: 100;
+    position: fixed; z-index: 100;
+    /* env() falls back to 26px on browsers/devices without a safe-area inset
+       (Android, older iOS); on notched iPhones this keeps the button clear
+       of the home-indicator gesture bar instead of sitting under it. */
+    bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+    left: calc(26px + env(safe-area-inset-left, 0px));
     width: 58px; height: 58px; border-radius: 50%;
     background: linear-gradient(135deg, #29f0e0, #6be8c9);
     display: flex; align-items: center; justify-content: center;
@@ -604,6 +626,81 @@
     </div>
   </section>
 
+  <!-- S3b: LIVE DEMO -->
+  <section id="demo" aria-label="דוגמה אינטראקטיבית">
+    <div class="section-label center">תראו את זה בפעולה</div>
+    <h2 class="section-title" style="text-align:center; margin-inline:auto;">גררו את הפילם, תראו איך המנוע בוחר</h2>
+    <p class="section-sub" style="text-align:center; margin-inline:auto;">קליפ סלפי אמיתי של 3.5 שניות — גררו כדי לעבור בין הפריימים, או פשוט חכו והפעילו את הכפתור.</p>
+    <div class="demo-shell">
+      <div>
+        <div class="demo-viewer" id="demo-viewer">
+          <img id="demo-viewer-img" alt="" loading="lazy" width="360" height="640">
+          <div class="stamp-rejected">נפסל</div>
+          <div class="stamp-winner" id="demo-winner-stamp" hidden>הבחירה של המנוע</div>
+        </div>
+        <div class="demo-strip-wrap">
+          <div class="demo-strip" id="demo-strip">
+            <div class="demo-playhead" id="demo-playhead"></div>
+          </div>
+          <label for="demo-range" class="visually-hidden">בחירת פריים</label>
+          <input type="range" id="demo-range" min="0" max="0" value="0" step="1">
+        </div>
+        <p class="demo-note">קליפ סלפי, 3.5 שניות · 7 פריימים נסרקו</p>
+        <div class="visually-hidden" id="demo-live" aria-live="polite"></div>
+      </div>
+      <div class="demo-panel">
+        <div class="demo-panel-head">
+          <span class="demo-time" id="demo-time">0.0s</span>
+          <span class="demo-scene" id="demo-scene">דיוקן</span>
+        </div>
+        <div class="demo-final" id="demo-final">0.000</div>
+        <div class="demo-gate" id="demo-gate" hidden></div>
+        <p class="demo-reason" id="demo-reason"></p>
+        <span class="demo-chip" id="demo-duchenne" hidden>חיוך אמיתי (קמט עיניים)</span>
+        <div class="demo-bars">
+          <div class="demo-bar-row">
+            <span class="demo-bar-label">חדות</span>
+            <div class="demo-bar-track"><div class="demo-bar-fill" id="bar-sharpness_norm"></div></div>
+            <span class="demo-bar-val" id="barval-sharpness_norm">0.00</span>
+          </div>
+          <div class="demo-bar-row">
+            <span class="demo-bar-label">עיניים פקוחות</span>
+            <div class="demo-bar-track"><div class="demo-bar-fill" id="bar-eyes_open"></div></div>
+            <span class="demo-bar-val" id="barval-eyes_open">0.00</span>
+          </div>
+          <div class="demo-bar-row">
+            <span class="demo-bar-label">חיוך</span>
+            <div class="demo-bar-track"><div class="demo-bar-fill" id="bar-smile"></div></div>
+            <span class="demo-bar-val" id="barval-smile">0.00</span>
+          </div>
+          <div class="demo-bar-row">
+            <span class="demo-bar-label">מבט למצלמה</span>
+            <div class="demo-bar-track"><div class="demo-bar-fill" id="bar-gaze"></div></div>
+            <span class="demo-bar-val" id="barval-gaze">0.00</span>
+          </div>
+          <div class="demo-bar-row">
+            <span class="demo-bar-label">קומפוזיציה</span>
+            <div class="demo-bar-track"><div class="demo-bar-fill" id="bar-composition"></div></div>
+            <span class="demo-bar-val" id="barval-composition">0.00</span>
+          </div>
+          <div class="demo-bar-row">
+            <span class="demo-bar-label">תאורת פנים</span>
+            <div class="demo-bar-track"><div class="demo-bar-fill" id="bar-face_lighting"></div></div>
+            <span class="demo-bar-val" id="barval-face_lighting">0.00</span>
+          </div>
+        </div>
+        <button type="button" class="demo-replay" id="demo-replay" hidden>▶ הפעלה מחדש</button>
+      </div>
+    </div>
+    <noscript>
+      <div class="noscript-grid">
+        <img src="demo/f01.webp" alt="פריים 1 מהקליפ" width="120" height="213" loading="lazy">
+        <img src="demo/f06.webp" alt="פריים שנפסל על טשטוש" width="120" height="213" loading="lazy">
+        <img src="demo/winner-hi.webp" alt="הפריים שנבחר כמושלם" width="120" height="213" loading="lazy">
+      </div>
+    </noscript>
+  </section>
+
   <!-- S4: TWO-PASS MODEL -->
   <section id="how-it-thinks" aria-label="איך המנוע חושב">
     <div class="section-label">מתחת למכסה</div>
@@ -703,7 +800,11 @@
 </a>
 
 <footer>
-  <div class="wrap">הרגע המושלם — מבית FlowUp</div>
+  <div class="wrap">
+    הרגע המושלם — מבית FlowUp ·
+    <a href="privacy.html">מדיניות פרטיות</a> ·
+    <a href="terms.html">תנאי שימוש</a>
+  </div>
 </footer>
 
 <script>
