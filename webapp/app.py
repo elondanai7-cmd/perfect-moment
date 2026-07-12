@@ -364,6 +364,12 @@ if __name__ == "__main__":
         import gradio.networking as _gr_networking
         _gr_networking.url_ok = lambda url: True
 
+    # Reuse the landing page's favicon so the browser tab matches the brand
+    # instead of Gradio's default logo -- cosmetic, but it's the first thing
+    # a pilot user sees if they keep the tab open.
+    favicon = Path(__file__).resolve().parent.parent / "landing" / "favicon.svg"
+
     demo.queue(default_concurrency_limit=1, max_size=10).launch(
-        share=share, server_name=host, server_port=port
+        share=share, server_name=host, server_port=port,
+        favicon_path=str(favicon) if favicon.exists() else None,
     )
