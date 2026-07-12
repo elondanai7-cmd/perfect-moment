@@ -126,9 +126,17 @@ class FaceScore:
 
     @property
     def genuine_laugh(self) -> float:
-        """High only when BOTH smiling and mouth open -- distinguishes a real
-        laugh from a closed polite smile."""
-        return self.smile * self.mouth_open
+        """High only when smiling, mouth open, AND cheek-squinting together.
+
+        Originally smile * mouth_open with no squint gate -- but talking or
+        yawning also scores high on smile + mouth_open (mediapipe's smile
+        blendshape fires on any raised mouth corners, not just genuine ones),
+        so a mid-sentence open-mouth frame from a dim, blurry clip scored as
+        a "genuine laugh" winner (found via a real pilot video, 2026-07-12).
+        Requiring squint too -- the actual eye-crinkle marker of authentic
+        laughter -- means an open mouth without eye engagement (talking)
+        no longer scores as a laugh."""
+        return self.smile * self.mouth_open * self.squint
 
     @property
     def duchenne_bonus(self) -> float:
