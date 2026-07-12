@@ -167,7 +167,20 @@ def _get_scorer() -> AestheticScorer:
     global _scorer_singleton
     if _scorer_singleton is None:
         _ensure_face_model()
-        _scorer_singleton = AestheticScorer()
+        # AestheticScorer() downloads the NIMA weights on first use if they
+        # aren't already cached (render.yaml pre-fetches them at build time,
+        # but this is the same class of bug as the face model: pyiqa/torch's
+        # own download path has no timeout we control). A global socket
+        # timeout is a blunt but effective safety net -- bounds *any*
+        # network call made during model construction, not just the ones
+        # we've found so far, so it fails fast instead of hanging forever.
+        import socket
+        prev_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(30)
+        try:
+            _scorer_singleton = AestheticScorer()
+        finally:
+            socket.setdefaulttimeout(prev_timeout)
     return _scorer_singleton
 
 
