@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://perfectmoment.flowup.co.il/sitemap.xml
+# TODO: no real domain registered yet. Once Perfect Moment has its own
+# domain, uncomment and point this at it (not a FlowUp subdomain):
+# Sitemap: https://YOUR-DOMAIN/sitemap.xml
