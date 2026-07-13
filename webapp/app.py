@@ -394,6 +394,12 @@ def submit_feedback(rating: str, request: gr.Request) -> str:
 # backwards on the mobile-first audience this is built for.
 RTL_CSS = """
 .gradio-container { direction: rtl; text-align: right; }
+/* Hide Gradio's own "Built with Gradio" / "Use via API" footer -- a
+   consumer-facing pilot page shouldn't expose either link. show_api=False
+   on launch() removes the API one; this hides the footer bar entirely
+   (it always renders the branding link regardless of show_api). Generic
+   selector (not a hashed svelte class) so it survives gradio upgrades. */
+.gradio-container footer { display: none !important; }
 """
 
 with gr.Blocks(title="הרגע המושלם", css=RTL_CSS) as demo:
@@ -441,7 +447,11 @@ if __name__ == "__main__":
     share = os.environ.get("PM_SHARE") == "1"
     # Render (and most PaaS free tiers) assign the port via $PORT and expect
     # the process to bind 0.0.0.0; local dev keeps Gradio's own default.
-    port = int(os.environ.get("PORT", 0)) or None
+    # os.environ.get("PORT", 0) only falls back to the default when PORT is
+    # entirely unset -- if it's set to an empty string (seen locally while
+    # testing), .get returns "" and int("") crashes at import before the
+    # app ever starts. `or 0` catches both "unset" and "set-but-empty".
+    port = int(os.environ.get("PORT") or 0) or None
     host = "0.0.0.0" if port else None
 
     if host:
@@ -465,4 +475,5 @@ if __name__ == "__main__":
     demo.queue(default_concurrency_limit=1, max_size=10).launch(
         share=share, server_name=host, server_port=port,
         favicon_path=str(favicon) if favicon.exists() else None,
+        show_api=False,
     )
