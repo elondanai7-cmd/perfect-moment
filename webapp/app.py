@@ -244,11 +244,26 @@ def _zip_images(images: list[Path], out_dir: Path) -> Path:
     return zip_path
 
 
-def process_video(video_path: str, request: gr.Request, progress: gr.Progress = gr.Progress()):
+SUBMIT_READY = gr.update(interactive=True, value="מצא לי את הרגע המושלם")
+SUBMIT_BUSY = gr.update(interactive=False, value="עובד על זה... ⏳")
+
+
+def process_video(video_path: str, consent: bool, request: gr.Request, progress: gr.Progress = gr.Progress()):
     no_download = gr.update(visible=False)
 
     if not video_path:
-        yield [], "העלה סרטון קודם.", gr.update(visible=False), no_download
+        yield [], "העלה סרטון קודם.", gr.update(visible=False), no_download, SUBMIT_READY
+        return
+
+    # Privacy Protection Law (Amendment 13, Aug 2025) / the site's own privacy
+    # policy require explicit consent *before* personal data (a video, likely
+    # containing faces) is collected -- this is the actual form on the site
+    # that collects personal data, and until this checkbox existed there was
+    # no consent gate anywhere in that flow. Checked server-side, not just
+    # client-side, since a client-side-only check can be bypassed by anyone
+    # calling this endpoint directly (as gradio_client does).
+    if not consent:
+        yield [], "כדי להעלות סרטון צריך לאשר שקראת את מדיניות הפרטיות (התיבה מעל הכפתור).", gr.update(visible=False), no_download, SUBMIT_READY
         return
 
     src = Path(video_path)
@@ -259,7 +274,7 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
     last = _last_request_at.get(client)
     if last is not None and (now - last) < MIN_SECONDS_BETWEEN_REQUESTS:
         wait = MIN_SECONDS_BETWEEN_REQUESTS - (now - last)
-        yield [], f"רגע, לאט 🙂 אפשר עוד ניסיון בעוד כ-{wait:.0f} שניות.", gr.update(visible=False), no_download
+        yield [], f"רגע, לאט 🙂 אפשר עוד ניסיון בעוד כ-{wait:.0f} שניות.", gr.update(visible=False), no_download, SUBMIT_READY
         return
     _last_request_at[client] = now
 
@@ -278,13 +293,13 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         msg = f"לא הצלחתי לקרוא את הקובץ שהועלה: {exc}"
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "unreadable",
                    "exported_count": 0, "top_score": "", "notes": str(exc), "feedback": ""})
-        yield [], msg, gr.update(visible=False), no_download
+        yield [], msg, gr.update(visible=False), no_download, SUBMIT_READY
         return
     if size_mb > MAX_UPLOAD_MB:
         msg = f"הקובץ גדול מדי ({size_mb:.0f}MB). מקסימום {MAX_UPLOAD_MB}MB — נסה סרטון קצר/דחוס יותר."
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "rejected_size",
                    "exported_count": 0, "top_score": "", "notes": msg, "feedback": ""})
-        yield [], msg, gr.update(visible=False), no_download
+        yield [], msg, gr.update(visible=False), no_download, SUBMIT_READY
         return
 
     try:
@@ -293,20 +308,20 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         msg = f"לא הצלחתי לקרוא את הסרטון: {exc}"
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "unreadable",
                    "exported_count": 0, "top_score": "", "notes": str(exc), "feedback": ""})
-        yield [], msg, gr.update(visible=False), no_download
+        yield [], msg, gr.update(visible=False), no_download, SUBMIT_READY
         return
     if duration > MAX_DURATION_SECONDS:
         msg = f"הסרטון ארוך מדי ({duration:.0f} שניות). מקסימום {MAX_DURATION_SECONDS} שניות בבטא."
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "rejected_duration",
                    "exported_count": 0, "top_score": "", "notes": msg, "feedback": ""})
-        yield [], msg, gr.update(visible=False), no_download
+        yield [], msg, gr.update(visible=False), no_download, SUBMIT_READY
         return
 
     # Real-user feedback: without this, the wait between clicking submit and
     # the progress bar's first update looked identical to "frozen/broken" --
     # people didn't trust it was working. Yield an immediate, unmissable
     # status before any of the slow work (model load, ffmpeg, NIMA) starts.
-    yield [], "🔄 המערכת פועלת על הסרטון שלך... זה יכול לקחת בין 30 שניות לדקה. נא לא לרענן את הדף.", gr.update(visible=False), no_download
+    yield [], "🔄 המערכת פועלת על הסרטון שלך... זה יכול לקחת בין 30 שניות לדקה. נא לא לרענן את הדף.", gr.update(visible=False), no_download, SUBMIT_BUSY
 
     progress(0, desc="מכין...")
     _sweep_stale_temp_dirs()
@@ -341,7 +356,7 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         msg = f"משהו השתבש: {exc}"
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "error",
                    "exported_count": 0, "top_score": "", "notes": str(exc), "feedback": ""})
-        yield [], msg, gr.update(visible=False), no_download
+        yield [], msg, gr.update(visible=False), no_download, SUBMIT_READY
         return
 
     images = sorted(out_dir.glob("rank_*.jpg"))
@@ -349,7 +364,7 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         msg = "לא נמצאו פריימים מספיק טובים בסרטון הזה. נסה סרטון עם יותר אור או יציבות."
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "no_frames",
                    "exported_count": 0, "top_score": "", "notes": "", "feedback": ""})
-        yield [], msg, gr.update(visible=False), no_download
+        yield [], msg, gr.update(visible=False), no_download, SUBMIT_READY
         return
 
     note = f"נבחרו {len(images)} התמונות הטובות ביותר מתוך הסרטון, תוך {result.elapsed_seconds:.0f} שניות."
@@ -377,7 +392,7 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
     except OSError:  # noqa: BLE001 — download convenience only, never block showing the gallery
         download_update = no_download
 
-    yield [str(p) for p in images], note, gr.update(visible=True), download_update
+    yield [str(p) for p in images], note, gr.update(visible=True), download_update, SUBMIT_READY
 
 
 def submit_feedback(rating: str, request: gr.Request) -> str:
@@ -400,6 +415,31 @@ RTL_CSS = """
    (it always renders the branding link regardless of show_api). Generic
    selector (not a hashed svelte class) so it survives gradio upgrades. */
 .gradio-container footer { display: none !important; }
+
+/* Dark theme matching the landing page (landing/index.html's --bg/--cyan/
+   --violet), not Gradio's default light theme. Without this, the app is
+   embedded via <iframe> directly inside the dark landing page (see
+   #live-app .live-frame, background:#fff) -- the exact moment a visitor
+   tries the product, the experience visibly breaks from one dark, branded
+   page into a plain white Gradio form. No theme= object here (avoids
+   fighting Gradio's Theme system on top of the compat patches this file
+   already needs for gradio 5.9.1/Python 3.14); scoped CSS overrides instead.
+*/
+.gradio-container, .gradio-container .main, body.gradio-container {
+  background: #08080c !important; color: #f2f2f7 !important;
+}
+.gradio-container .block, .gradio-container .form {
+  background: #0f0f16 !important; border-color: rgba(255,255,255,0.12) !important;
+}
+.gradio-container label span, .gradio-container .prose, .gradio-container h1,
+.gradio-container h2, .gradio-container h3, .gradio-container p {
+  color: #f2f2f7 !important;
+}
+.gradio-container button.primary {
+  background: linear-gradient(95deg, #29f0e0, #6be8c9) !important;
+  color: #06110f !important; border: none !important;
+}
+.gradio-container a { color: #29f0e0 !important; }
 """
 
 with gr.Blocks(title="הרגע המושלם", css=RTL_CSS) as demo:
@@ -412,6 +452,23 @@ with gr.Blocks(title="הרגע המושלם", css=RTL_CSS) as demo:
     )
     with gr.Row():
         video_in = gr.Video(label="הסרטון שלך", sources=["upload"])
+    # Privacy Protection Law (Amendment 13) requires explicit consent before
+    # personal data is collected -- this form (a video, likely with faces)
+    # had no consent step at all before this checkbox existed. value=False:
+    # must never default to pre-checked, that isn't valid consent under the
+    # law either.
+    consent = gr.Checkbox(
+        label="קראתי ואני מסכים/ה למדיניות הפרטיות ולתנאי השימוש", value=False
+    )
+    # Absolute URLs, not relative: this Gradio app is served from the
+    # cloudflared tunnel's own origin (a totally different domain from the
+    # landing site), so a relative "privacy.html" link would 404 -- there's
+    # no such file on this server.
+    gr.Markdown(
+        "[מדיניות פרטיות](https://landing-ten-amber-83.vercel.app/privacy.html) · "
+        "[תנאי שימוש](https://landing-ten-amber-83.vercel.app/terms.html)",
+        elem_id="pm-legal-links",
+    )
     submit = gr.Button("מצא לי את הרגע המושלם", variant="primary")
     status = gr.Markdown()
     # Fixed columns=5 crams onto a phone screen; Gradio's responsive column
@@ -431,7 +488,8 @@ with gr.Blocks(title="הרגע המושלם", css=RTL_CSS) as demo:
         feedback_note = gr.Markdown()
 
     submit.click(
-        fn=process_video, inputs=video_in, outputs=[gallery, status, feedback_row, download_btn]
+        fn=process_video, inputs=[video_in, consent],
+        outputs=[gallery, status, feedback_row, download_btn, submit]
     )
     rating.change(fn=submit_feedback, inputs=rating, outputs=feedback_note)
 

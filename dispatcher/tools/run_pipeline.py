@@ -1,6 +1,6 @@
 """Run the Perfect Moment worker pipeline on one inbox video.
 
-Usage: python tools/run_pipeline.py <video_path_in_inbox> [--top-n 5]
+Usage: python tools/run_pipeline.py <video_path_in_inbox> [--top-n 3]
 
 Steps:
   1. Move the video from inbox/ to processing/ (timestamp suffix on collision).
@@ -38,7 +38,10 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("video", help="path to video file (usually in inbox/)")
-    ap.add_argument("--top-n", type=int, default=5)
+    # 5 felt like too many similar choices to real pilot users (webapp/app.py
+    # made the same change, RESULTS_TOP_N) -- match it here so both delivery
+    # paths give the same experience.
+    ap.add_argument("--top-n", type=int, default=3)
     args = ap.parse_args()
 
     src = Path(args.video)

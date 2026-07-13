@@ -29,9 +29,10 @@ reading the manifest and *looking at the output images with your own vision*.
    Read each `rank_*.jpg` in `output_dir` with the Read tool and check with your eyes:
    - eyes open on the main subjects, no motion blur, no weird artifacts/cut-off faces
    - the image roughly matches the manifest `reason` for that frame
-   Drop any frame that fails. Rules:
-   - ≥3 frames survive → approve them.
-   - <3 survive → `--review "visual QA: only N frames passed"` instead of delivering.
+   Drop any frame that fails. Rules (default is now 3 candidates, not 5 — see
+   `tools/run_pipeline.py`):
+   - ≥2 frames survive → approve them.
+   - <2 survive → `--review "visual QA: only N frames passed"` instead of delivering.
    Keep a one-line verdict per frame for the summary (e.g. "rank_02 ✗ eyes closed").
 
 5. **Finalize**: `python tools/finalize_job.py <output_dir> --approve rank_01.jpg ...`
@@ -43,6 +44,10 @@ reading the manifest and *looking at the output images with your own vision*.
    - your visual QA verdicts
    - remind: "פתח את done/<job>/reply.txt, הדבק בוואטסאפ וצרף את התמונות"
    The founder sends manually on WhatsApp — you never send anything yourself.
+   - if this batch pushed `jobs.csv` past a multiple of 10 `status=done` rows
+     with feedback filled in, remind the founder to run
+     `python ../scripts/pilot_feedback_summary.py` (checks both this file and
+     `webapp/jobs.csv` against the PILOT.md gate).
 
 ## Hard rules
 - Never modify anything under `../perfectmoment/` (the worker). You only consume it.
