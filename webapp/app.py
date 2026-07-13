@@ -26,6 +26,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+import zipfile
 from pathlib import Path
 
 import gradio as gr
@@ -56,6 +57,47 @@ def _safe_json_schema_to_python_type(schema, defs):
 
 
 _gr_client_utils._json_schema_to_python_type = _safe_json_schema_to_python_type
+
+# gradio 5.9.1 builds several locks/events (App.lock, App.stop_event,
+# Queue.pending_message_lock, Queue.delete_lock) via utils.safe_get_lock() /
+# safe_get_stop_event(), which only construct asyncio.Lock() / asyncio.
+# Event() inside a try/except around asyncio.get_event_loop() -- a leftover
+# guard from when that call could raise RuntimeError with no running loop
+# yet (true at construction time, before uvicorn starts the loop). On
+# Python 3.14, asyncio.get_event_loop() with no running/current loop always
+# raises, so all of these silently end up None. Queue.pending_message_lock
+# = None then crashes every actual queue/predict request ("async with
+# self.pending_message_lock" in queueing.py's push(), used to process a
+# submitted video) with an unrelated-looking 500 on /gradio_api/queue/join
+# -- a real video upload could never complete. App.stop_event = None
+# separately crashes the heartbeat/stop_stream endpoint on every client
+# connect. Neither asyncio.Lock() nor asyncio.Event() actually need a
+# running loop to construct in modern Python (both bind lazily on first
+# await), so the try/except here is just stale.
+#
+# Patching gradio.utils.safe_get_lock alone is not enough: routes.py does
+# `from gradio import utils` and calls utils.safe_get_lock() (a live
+# lookup, patch works), but queueing.py does
+# `from gradio.utils import safe_get_lock` (binds its own local name to the
+# original function object at import time, before this patch ever runs) --
+# so queueing.py's copy has to be patched directly too.
+import gradio.queueing as _gr_queueing  # noqa: E402
+import gradio.utils as _gr_utils  # noqa: E402
+
+
+def _safe_get_stop_event():
+    import asyncio
+    return asyncio.Event()
+
+
+def _safe_get_lock():
+    import asyncio
+    return asyncio.Lock()
+
+
+_gr_utils.safe_get_stop_event = _safe_get_stop_event
+_gr_utils.safe_get_lock = _safe_get_lock
+_gr_queueing.safe_get_lock = _safe_get_lock
 
 MODEL_URL = (
     "https://storage.googleapis.com/mediapipe-models/face_landmarker/"
@@ -188,21 +230,47 @@ def _get_scorer() -> AestheticScorer:
     return _scorer_singleton
 
 
+RESULTS_TOP_N = 3  # 5 felt like too many similar choices to real pilot users -- 3 is enough
+
+
+def _zip_images(images: list[Path], out_dir: Path) -> Path:
+    """Bundle the result JPEGs (full resolution) into one ZIP for a single
+    real download -- pilot feedback: users were screenshotting the gallery
+    (low quality) instead of finding Gradio's per-image download icon."""
+    zip_path = out_dir / "perfect-moment-photos.zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_STORED) as zf:
+        for p in images:
+            zf.write(p, arcname=p.name)
+    return zip_path
+
+
 def process_video(video_path: str, request: gr.Request, progress: gr.Progress = gr.Progress()):
+    no_download = gr.update(visible=False)
+
     if not video_path:
-        return [], "העלה סרטון קודם.", gr.update(visible=False)
+        yield [], "העלה סרטון קודם.", gr.update(visible=False), no_download
+        return
 
     src = Path(video_path)
     client = _real_client_ip(request)
     job_timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    _last_job_id[client] = job_timestamp
 
     now = time.monotonic()
     last = _last_request_at.get(client)
     if last is not None and (now - last) < MIN_SECONDS_BETWEEN_REQUESTS:
         wait = MIN_SECONDS_BETWEEN_REQUESTS - (now - last)
-        return [], f"רגע, לאט 🙂 אפשר עוד ניסיון בעוד כ-{wait:.0f} שניות.", gr.update(visible=False)
+        yield [], f"רגע, לאט 🙂 אפשר עוד ניסיון בעוד כ-{wait:.0f} שניות.", gr.update(visible=False), no_download
+        return
     _last_request_at[client] = now
+
+    # Set only once we're past the rate-limit guard: every path below this
+    # point calls _log_job(job_timestamp), so jobs.csv always has a matching
+    # row. Setting it earlier (before the rate-limit check) let a rate-
+    # limited retry silently overwrite this with a timestamp that was never
+    # logged — a later feedback rating would then match no row in jobs.csv
+    # and be dropped, while submit_feedback still shows "תודה!" as if it
+    # worked (see _record_feedback: no-op when the id isn't found).
+    _last_job_id[client] = job_timestamp
 
     try:
         size_mb = src.stat().st_size / (1024 * 1024)
@@ -210,12 +278,14 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         msg = f"לא הצלחתי לקרוא את הקובץ שהועלה: {exc}"
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "unreadable",
                    "exported_count": 0, "top_score": "", "notes": str(exc), "feedback": ""})
-        return [], msg, gr.update(visible=False)
+        yield [], msg, gr.update(visible=False), no_download
+        return
     if size_mb > MAX_UPLOAD_MB:
         msg = f"הקובץ גדול מדי ({size_mb:.0f}MB). מקסימום {MAX_UPLOAD_MB}MB — נסה סרטון קצר/דחוס יותר."
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "rejected_size",
                    "exported_count": 0, "top_score": "", "notes": msg, "feedback": ""})
-        return [], msg, gr.update(visible=False)
+        yield [], msg, gr.update(visible=False), no_download
+        return
 
     try:
         duration = extract.probe_video(src).duration_seconds
@@ -223,12 +293,20 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         msg = f"לא הצלחתי לקרוא את הסרטון: {exc}"
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "unreadable",
                    "exported_count": 0, "top_score": "", "notes": str(exc), "feedback": ""})
-        return [], msg, gr.update(visible=False)
+        yield [], msg, gr.update(visible=False), no_download
+        return
     if duration > MAX_DURATION_SECONDS:
         msg = f"הסרטון ארוך מדי ({duration:.0f} שניות). מקסימום {MAX_DURATION_SECONDS} שניות בבטא."
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "rejected_duration",
                    "exported_count": 0, "top_score": "", "notes": msg, "feedback": ""})
-        return [], msg, gr.update(visible=False)
+        yield [], msg, gr.update(visible=False), no_download
+        return
+
+    # Real-user feedback: without this, the wait between clicking submit and
+    # the progress bar's first update looked identical to "frozen/broken" --
+    # people didn't trust it was working. Yield an immediate, unmissable
+    # status before any of the slow work (model load, ffmpeg, NIMA) starts.
+    yield [], "🔄 המערכת פועלת על הסרטון שלך... זה יכול לקחת בין 30 שניות לדקה. נא לא לרענן את הדף.", gr.update(visible=False), no_download
 
     progress(0, desc="מכין...")
     _sweep_stale_temp_dirs()
@@ -252,7 +330,7 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         result = pipeline.run(
             video_path=src,
             out_dir=out_dir,
-            top_n=5,
+            top_n=RESULTS_TOP_N,
             min_score=config.DEFAULT_MIN_SCORE,
             fps=config.DEFAULT_FPS,
             on_progress=on_progress,
@@ -263,14 +341,16 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
         msg = f"משהו השתבש: {exc}"
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "error",
                    "exported_count": 0, "top_score": "", "notes": str(exc), "feedback": ""})
-        return [], msg, gr.update(visible=False)
+        yield [], msg, gr.update(visible=False), no_download
+        return
 
     images = sorted(out_dir.glob("rank_*.jpg"))
     if not images:
         msg = "לא נמצאו פריימים מספיק טובים בסרטון הזה. נסה סרטון עם יותר אור או יציבות."
         _log_job({"timestamp": job_timestamp, "video": src.name, "status": "no_frames",
                    "exported_count": 0, "top_score": "", "notes": "", "feedback": ""})
-        return [], msg, gr.update(visible=False)
+        yield [], msg, gr.update(visible=False), no_download
+        return
 
     note = f"נבחרו {len(images)} התמונות הטובות ביותר מתוך הסרטון, תוך {result.elapsed_seconds:.0f} שניות."
     if not result.quality_bar_met:
@@ -288,7 +368,16 @@ def process_video(video_path: str, request: gr.Request, progress: gr.Progress = 
     _log_job({"timestamp": job_timestamp, "video": src.name, "status": "done",
                "exported_count": len(images), "top_score": top_score, "notes": "", "feedback": ""})
 
-    return [str(p) for p in images], note, gr.update(visible=True)
+    # Real file download in original quality (not the gallery's screenshot-
+    # sized preview) -- one click, no separate "prepare" step, since we
+    # already have the images on disk right here.
+    try:
+        zip_path = _zip_images(images, out_dir)
+        download_update = gr.update(value=str(zip_path), visible=True)
+    except OSError:  # noqa: BLE001 — download convenience only, never block showing the gallery
+        download_update = no_download
+
+    yield [str(p) for p in images], note, gr.update(visible=True), download_update
 
 
 def submit_feedback(rating: str, request: gr.Request) -> str:
@@ -322,8 +411,12 @@ with gr.Blocks(title="הרגע המושלם", css=RTL_CSS) as demo:
     # Fixed columns=5 crams onto a phone screen; Gradio's responsive column
     # spec lets it collapse to 2 on narrow viewports and grow on desktop.
     gallery = gr.Gallery(
-        label="התמונות שנבחרו", columns=[2, 3, 5], height="auto", object_fit="cover"
+        label="התמונות שנבחרו", columns=[2, 3, RESULTS_TOP_N], height="auto", object_fit="cover"
     )
+    # Real pilot users were screenshotting the gallery (low quality) instead
+    # of finding Gradio's small per-image download icon -- one big button
+    # that downloads the full-resolution ZIP in a single click.
+    download_btn = gr.DownloadButton("💾 הורדת כל התמונות (איכות מלאה)", visible=False)
 
     with gr.Row(visible=False) as feedback_row:
         rating = gr.Radio(
@@ -332,7 +425,7 @@ with gr.Blocks(title="הרגע המושלם", css=RTL_CSS) as demo:
         feedback_note = gr.Markdown()
 
     submit.click(
-        fn=process_video, inputs=video_in, outputs=[gallery, status, feedback_row]
+        fn=process_video, inputs=video_in, outputs=[gallery, status, feedback_row, download_btn]
     )
     rating.change(fn=submit_feedback, inputs=rating, outputs=feedback_note)
 
